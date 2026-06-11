@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<parties>
+    <party p_no="2">
+        <abbrev>FYP</abbrev>
+        <short_name>Future Youth Party</short_name>
+        <party_name>Future Youth Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="3">
+        <abbrev>GNZ</abbrev>
+        <short_name>GOdsownNZ</short_name>
+        <party_name>GOdsownNZ</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="5">
+        <abbrev>ACT</abbrev>
+        <short_name>ACT New Zealand</short_name>
+        <party_name>ACT New Zealand</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="6">
+        <abbrev>ALL</abbrev>
+        <short_name>Alliance</short_name>
+        <party_name>Alliance</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="7">
+        <abbrev>CLI</abbrev>
+        <short_name>Climate Party</short_name>
+        <party_name>Climate Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="8">
+        <abbrev>CL</abbrev>
+        <short_name>Communist League</short_name>
+        <party_name>Communist League</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="9">
+        <abbrev>FNZ</abbrev>
+        <short_name>Focus New Zealand</short_name>
+        <party_name>Focus New Zealand</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="10">
+        <abbrev>GP</abbrev>
+        <short_name>Green Party</short_name>
+        <party_name>Green Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="11">
+        <abbrev>HR</abbrev>
+        <short_name>Human Rights Party</short_name>
+        <party_name>Human Rights Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="12">
+        <abbrev>IPM</abbrev>
+        <short_name>Internet MANA</short_name>
+        <party_name>Internet MANA</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="13">
+        <abbrev>LAB</abbrev>
+        <short_name>Labour Party</short_name>
+        <party_name>Labour Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="16">
+        <abbrev>NAT</abbrev>
+        <short_name>National Party</short_name>
+        <party_name>National Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="17">
+        <abbrev>NZF</abbrev>
+        <short_name>New Zealand First Party</short_name>
+        <party_name>New Zealand First Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="19">
+        <abbrev>NZIC</abbrev>
+        <short_name>NZ Independent Coalition</short_name>
+        <party_name>NZ Independent Coalition</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="21">
+        <abbrev>PRF</abbrev>
+        <short_name>Patriotic Revolutionary Front</short_name>
+        <party_name>Patriotic Revolutionary Front</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="22">
+        <abbrev>CIV</abbrev>
+        <short_name>The Civilian Party</short_name>
+        <party_name>The Civilian Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="23">
+        <abbrev>EXP</abbrev>
+        <short_name>The Expats</short_name>
+        <party_name>The Expats</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="24">
+        <abbrev>TOP</abbrev>
+        <short_name>The Opportunities Party (TOP)</short_name>
+        <party_name>The Opportunities Party (TOP)</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="25">
+        <abbrev>NAP</abbrev>
+        <short_name>NAP</short_name>
+        <party_name>NAP</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="26">
+        <abbrev>CF</abbrev>
+        <short_name>Climate First</short_name>
+        <party_name>Climate First</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="27">
+        <abbrev>TLP</abbrev>
+        <short_name>The Logic Party</short_name>
+        <party_name>The Logic Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="28">
+        <abbrev>RNZP</abbrev>
+        <short_name>Republic of New Zealand Party</short_name>
+        <party_name>Republic of New Zealand Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="29">
+        <abbrev>NZPP</abbrev>
+        <short_name>New Zealand People&#39;s Party</short_name>
+        <party_name>New Zealand People&#39;s Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="30">
+        <abbrev>IP</abbrev>
+        <short_name>Internet Party</short_name>
+        <party_name>Internet Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="31">
+        <abbrev>UFNZ</abbrev>
+        <short_name>United Future</short_name>
+        <party_name>United Future</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="32">
+        <abbrev>VNZ</abbrev>
+        <short_name>Vision New Zealand</short_name>
+        <party_name>Vision New Zealand</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="36">
+        <abbrev>ALCP</abbrev>
+        <short_name>Aotearoa Legalise Cannabis Party</short_name>
+        <party_name>Aotearoa Legalise Cannabis Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="38">
+        <abbrev>BAN</abbrev>
+        <short_name>Ban1080</short_name>
+        <party_name>Ban1080</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="41">
+        <abbrev>ATT</abbrev>
+        <short_name>Attica</short_name>
+        <party_name>Attica</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="42">
+        <abbrev>PROG</abbrev>
+        <short_name>Progressive Aotearoa New Zealand</short_name>
+        <party_name>Progressive Aotearoa New Zealand</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="43">
+        <abbrev>HAR</abbrev>
+        <short_name>Harmony</short_name>
+        <party_name>Harmony</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="44">
+        <abbrev>PUB</abbrev>
+        <short_name>NZ Public Party</short_name>
+        <party_name>NZ Public Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="45">
+        <abbrev>VOP</abbrev>
+        <short_name>Voice of the People</short_name>
+        <party_name>Voice of the People</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="46">
+        <abbrev>INT</abbrev>
+        <short_name>Integrity New Zealand</short_name>
+        <party_name>Integrity New Zealand</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="47">
+        <abbrev>TRU</abbrev>
+        <short_name>Trump New Zealand Party</short_name>
+        <party_name>Trump New Zealand Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="48">
+        <abbrev>MANA</abbrev>
+        <short_name>MANA</short_name>
+        <party_name>MANA</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="1">
+        <abbrev>ADV</abbrev>
+        <short_name>Advance NZ</short_name>
+        <party_name>Advance NZ</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="39">
+        <abbrev>HNZ</abbrev>
+        <short_name>HeartlandNZ</short_name>
+        <party_name>HeartlandNZ</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="35">
+        <abbrev>SC</abbrev>
+        <short_name>Social Credit</short_name>
+        <party_name>Social Credit</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="33">
+        <abbrev>SNZP</abbrev>
+        <short_name>Sustainable New Zealand Party</short_name>
+        <party_name>Sustainable New Zealand Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="40">
+        <abbrev>TEA</abbrev>
+        <short_name>TEA Party</short_name>
+        <party_name>TEA Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="56">
+        <abbrev>WRP</abbrev>
+        <short_name>Women’s Rights Party</short_name>
+        <party_name>Women’s Rights Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="18">
+        <abbrev>NZEE</abbrev>
+        <short_name>NZ Economic Euthenics Party</short_name>
+        <party_name>Economic Euthenics </party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="54">
+        <abbrev>NZL</abbrev>
+        <short_name>NZ Loyal</short_name>
+        <party_name>New Zealand Loyal</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="49">
+        <abbrev>DNZ</abbrev>
+        <short_name>DemocracyNZ</short_name>
+        <party_name>DemocracyNZ</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="59">
+        <abbrev>NWOMP</abbrev>
+        <short_name>New World Order McCann Party </short_name>
+        <party_name>New World Order McCann Party </party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="53">
+        <abbrev>DA</abbrev>
+        <short_name>Democratic Alliance</short_name>
+        <party_name>Democratic Alliance</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="60">
+        <abbrev>NZSP</abbrev>
+        <short_name>New Zealand Sovereignty Party</short_name>
+        <party_name>New Zealand Sovereignty Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="61">
+        <abbrev>NP</abbrev>
+        <short_name>Northland Party</short_name>
+        <party_name>Northland Party</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="4">
+        <abbrev>1LAW</abbrev>
+        <short_name>1Law4All</short_name>
+        <party_name>1Law4All</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="62">
+        <abbrev>WN</abbrev>
+        <short_name>Workers Now</short_name>
+        <party_name>Workers Now</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="63">
+        <abbrev> PPNZ</abbrev>
+        <short_name> PPNZ</short_name>
+        <party_name>Protect and Prosper New Zealand</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="14">
+        <abbrev>TPMAO</abbrev>
+        <short_name>Te Pāti Māori</short_name>
+        <party_name>Te Pāti Māori</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="20">
+        <abbrev>NZOP</abbrev>
+        <short_name>NZ Outdoors &amp; Freedom Party</short_name>
+        <party_name>NZ Outdoors &amp; Freedom Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="15">
+        <abbrev>MFP</abbrev>
+        <short_name>Money Free Party</short_name>
+        <party_name>Money Free Party NZ</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="52">
+        <abbrev>AJP</abbrev>
+        <short_name>Animal Justice Party</short_name>
+        <party_name>Animal Justice Party </party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="37">
+        <abbrev>NewZ</abbrev>
+        <short_name>NewZeal</short_name>
+        <party_name>NewZeal</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="57">
+        <abbrev>RTV</abbrev>
+        <short_name>Rock the Vote NZ</short_name>
+        <party_name>Rock the Vote NZ</party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="58">
+        <abbrev>FNZ</abbrev>
+        <short_name>Freedoms NZ</short_name>
+        <party_name>Freedoms NZ</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="34">
+        <abbrev>NC</abbrev>
+        <short_name>New Conservatives</short_name>
+        <party_name>New Conservatives</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="64">
+        <abbrev>NWO</abbrev>
+        <short_name>New World Order</short_name>
+        <party_name>New World Order </party_name>
+        <registered>no</registered>
+    </party>
+    <party p_no="51">
+        <abbrev>FNZ</abbrev>
+        <short_name>Freedoms NZ</short_name>
+        <party_name>Freedoms NZ (Umbrella party)</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="55">
+        <abbrev>LBP</abbrev>
+        <short_name>Leighton Baker</short_name>
+        <party_name>Leighton Baker Party</party_name>
+        <registered>yes</registered>
+    </party>
+    <party p_no="50">
+        <abbrev>NNP</abbrev>
+        <short_name>New Nation Party</short_name>
+        <party_name>New Nation Party</party_name>
+        <registered>yes</registered>
+    </party>
+</parties>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<votingplace vp_id="1764" vp_e_no="64" e_no="64" vp_no="22" updated="2024-11-10T00:00:00">
+    <time_received>2023-10-25T11:59:04</time_received>
+    <statistics>
+        <total_issued_ballot_papers>977</total_issued_ballot_papers>
+        <total_party_informals>4</total_party_informals>
+        <total_candidate_informals>4</total_candidate_informals>
+    </statistics>
+    <partyvotes>
+        <party p_no="5">
+            <votes>116</votes>
+        </party>
+        <party p_no="52">
+            <votes>0</votes>
+        </party>
+        <party p_no="36">
+            <votes>3</votes>
+        </party>
+        <party p_no="49">
+            <votes>4</votes>
+        </party>
+        <party p_no="51">
+            <votes>0</votes>
+        </party>
+        <party p_no="10">
+            <votes>69</votes>
+        </party>
+        <party p_no="13">
+            <votes>163</votes>
+        </party>
+        <party p_no="55">
+            <votes>0</votes>
+        </party>
+        <party p_no="16">
+            <votes>477</votes>
+        </party>
+        <party p_no="34">
+            <votes>0</votes>
+        </party>
+        <party p_no="50">
+            <votes>1</votes>
+        </party>
+        <party p_no="17">
+            <votes>99</votes>
+        </party>
+        <party p_no="54">
+            <votes>11</votes>
+        </party>
+        <party p_no="37">
+            <votes>10</votes>
+        </party>
+        <party p_no="14">
+            <votes>5</votes>
+        </party>
+        <party p_no="24">
+            <votes>9</votes>
+        </party>
+        <party p_no="56">
+            <votes>0</votes>
+        </party>
+    </partyvotes>
+    <candidatevotes>
+        <candidate c_no="570">
+            <votes>10</votes>
+        </candidate>
+        <candidate c_no="127">
+            <votes>43</votes>
+        </candidate>
+        <candidate c_no="433">
+            <votes>104</votes>
+        </candidate>
+        <candidate c_no="248">
+            <votes>30</votes>
+        </candidate>
+        <candidate c_no="201">
+            <votes>10</votes>
+        </candidate>
+        <candidate c_no="409">
+            <votes>7</votes>
+        </candidate>
+        <candidate c_no="564">
+            <votes>5</votes>
+        </candidate>
+        <candidate c_no="370">
+            <votes>10</votes>
+        </candidate>
+        <candidate c_no="91">
+            <votes>583</votes>
+        </candidate>
+        <candidate c_no="314">
+            <votes>165</votes>
+        </candidate>
+    </candidatevotes>
+</votingplace>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<electorate e_no="9" final="true" updated="2024-11-10T00:00:00">
+    <statistics>
+        <total_voting_places></total_voting_places>
+        <total_voting_places_counted>128</total_voting_places_counted>
+        <percent_voting_places_counted>100.0</percent_voting_places_counted>
+        <total_votes_cast>40618</total_votes_cast>
+        <percent_votes_cast>77.1</percent_votes_cast>
+        <total_party_informals>264</total_party_informals>
+        <total_candidate_informals>509</total_candidate_informals>
+        <total_registered_parties>20</total_registered_parties>
+        <total_candidates>11</total_candidates>
+    </statistics>
+    <partyvotes>
+        <party p_no="5">
+            <votes>3599</votes>
+        </party>
+        <party p_no="52">
+            <votes>43</votes>
+        </party>
+        <party p_no="36">
+            <votes>164</votes>
+        </party>
+        <party p_no="49">
+            <votes>199</votes>
+        </party>
+        <party p_no="51">
+            <votes>178</votes>
+        </party>
+        <party p_no="10">
+            <votes>3015</votes>
+        </party>
+        <party p_no="13">
+            <votes>12054</votes>
+        </party>
+        <party p_no="55">
+            <votes>29</votes>
+        </party>
+        <party p_no="16">
+            <votes>14908</votes>
+        </party>
+        <party p_no="34">
+            <votes>56</votes>
+        </party>
+        <party p_no="50">
+            <votes>20</votes>
+        </party>
+        <party p_no="17">
+            <votes>3896</votes>
+        </party>
+        <party p_no="54">
+            <votes>546</votes>
+        </party>
+        <party p_no="37">
+            <votes>247</votes>
+        </party>
+        <party p_no="14">
+            <votes>915</votes>
+        </party>
+        <party p_no="24">
+            <votes>460</votes>
+        </party>
+        <party p_no="56">
+            <votes>25</votes>
+        </party>
+    </partyvotes>
+    <candidatevotes>
+        <candidate c_no="549">
+            <votes>68</votes>
+        </candidate>
+        <candidate c_no="307">
+            <votes>13808</votes>
+        </candidate>
+        <candidate c_no="114">
+            <votes>66</votes>
+        </candidate>
+        <candidate c_no="378">
+            <votes>1235</votes>
+        </candidate>
+        <candidate c_no="236">
+            <votes>1923</votes>
+        </candidate>
+        <candidate c_no="65">
+            <votes>17007</votes>
+        </candidate>
+        <candidate c_no="539">
+            <votes>323</votes>
+        </candidate>
+        <candidate c_no="120">
+            <votes>104</votes>
+        </candidate>
+        <candidate c_no="205">
+            <votes>625</votes>
+        </candidate>
+        <candidate c_no="450">
+            <votes>2517</votes>
+        </candidate>
+        <candidate c_no="161">
+            <votes>1765</votes>
+        </candidate>
+    </candidatevotes>
+</electorate>

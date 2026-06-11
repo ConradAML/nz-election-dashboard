@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<electorate e_no="33" final="true" updated="2024-11-10T00:00:00">
+    <statistics>
+        <total_voting_places></total_voting_places>
+        <total_voting_places_counted>94</total_voting_places_counted>
+        <percent_voting_places_counted>100.0</percent_voting_places_counted>
+        <total_votes_cast>43018</total_votes_cast>
+        <percent_votes_cast>83.0</percent_votes_cast>
+        <total_party_informals>121</total_party_informals>
+        <total_candidate_informals>324</total_candidate_informals>
+        <total_registered_parties>20</total_registered_parties>
+        <total_candidates>7</total_candidates>
+    </statistics>
+    <partyvotes>
+        <party p_no="5">
+            <votes>2524</votes>
+        </party>
+        <party p_no="52">
+            <votes>62</votes>
+        </party>
+        <party p_no="36">
+            <votes>114</votes>
+        </party>
+        <party p_no="49">
+            <votes>25</votes>
+        </party>
+        <party p_no="51">
+            <votes>58</votes>
+        </party>
+        <party p_no="10">
+            <votes>8623</votes>
+        </party>
+        <party p_no="13">
+            <votes>12457</votes>
+        </party>
+        <party p_no="55">
+            <votes>12</votes>
+        </party>
+        <party p_no="16">
+            <votes>14841</votes>
+        </party>
+        <party p_no="34">
+            <votes>65</votes>
+        </party>
+        <party p_no="50">
+            <votes>11</votes>
+        </party>
+        <party p_no="17">
+            <votes>1442</votes>
+        </party>
+        <party p_no="54">
+            <votes>112</votes>
+        </party>
+        <party p_no="37">
+            <votes>119</votes>
+        </party>
+        <party p_no="14">
+            <votes>519</votes>
+        </party>
+        <party p_no="24">
+            <votes>1882</votes>
+        </party>
+        <party p_no="56">
+            <votes>31</votes>
+        </party>
+    </partyvotes>
+    <candidatevotes>
+        <candidate c_no="283">
+            <votes>759</votes>
+        </candidate>
+        <candidate c_no="173">
+            <votes>2975</votes>
+        </candidate>
+        <candidate c_no="507">
+            <votes>124</votes>
+        </candidate>
+        <candidate c_no="536">
+            <votes>214</votes>
+        </candidate>
+        <candidate c_no="350">
+            <votes>17565</votes>
+        </candidate>
+        <candidate c_no="140">
+            <votes>4412</votes>
+        </candidate>
+        <candidate c_no="109">
+            <votes>16305</votes>
+        </candidate>
+    </candidatevotes>
+</electorate>

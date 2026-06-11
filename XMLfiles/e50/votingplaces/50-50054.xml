@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<votingplace vp_id="1377" vp_e_no="50" e_no="50" vp_no="54" updated="2024-11-10T00:00:00">
+    <time_received>2023-10-30T16:26:35</time_received>
+    <statistics>
+        <total_issued_ballot_papers>282</total_issued_ballot_papers>
+        <total_party_informals>1</total_party_informals>
+        <total_candidate_informals>3</total_candidate_informals>
+    </statistics>
+    <partyvotes>
+        <party p_no="5">
+            <votes>39</votes>
+        </party>
+        <party p_no="52">
+            <votes>3</votes>
+        </party>
+        <party p_no="36">
+            <votes>2</votes>
+        </party>
+        <party p_no="49">
+            <votes>0</votes>
+        </party>
+        <party p_no="51">
+            <votes>2</votes>
+        </party>
+        <party p_no="10">
+            <votes>13</votes>
+        </party>
+        <party p_no="13">
+            <votes>57</votes>
+        </party>
+        <party p_no="55">
+            <votes>1</votes>
+        </party>
+        <party p_no="16">
+            <votes>131</votes>
+        </party>
+        <party p_no="34">
+            <votes>0</votes>
+        </party>
+        <party p_no="50">
+            <votes>0</votes>
+        </party>
+        <party p_no="17">
+            <votes>21</votes>
+        </party>
+        <party p_no="54">
+            <votes>6</votes>
+        </party>
+        <party p_no="37">
+            <votes>1</votes>
+        </party>
+        <party p_no="14">
+            <votes>3</votes>
+        </party>
+        <party p_no="24">
+            <votes>2</votes>
+        </party>
+        <party p_no="56">
+            <votes>0</votes>
+        </party>
+    </partyvotes>
+    <candidatevotes>
+        <candidate c_no="179">
+            <votes>53</votes>
+        </candidate>
+        <candidate c_no="66">
+            <votes>152</votes>
+        </candidate>
+        <candidate c_no="541">
+            <votes>5</votes>
+        </candidate>
+        <candidate c_no="306">
+            <votes>69</votes>
+        </candidate>
+    </candidatevotes>
+</votingplace>
