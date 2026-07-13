@@ -1,8 +1,6 @@
-import PlotModule from "react-plotly.js";
+import Plot from "react-plotly.js";
 
 export default function App() {
-  const Plot = PlotModule.default;
-
   return (
     <Plot
       data={[
