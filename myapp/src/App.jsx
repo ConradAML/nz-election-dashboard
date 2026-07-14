@@ -16,7 +16,6 @@ export default function App() {
           x: ["National", "Labour", "Green", "ACT", "NZ First", "Māori", "Opportunity", "Other"],
           y: [38.1, 26.9, 11.6, 8.6, 6.1, 3.1, 2.2, 3.4],
           type: "bar",
-          dragmode: false,
           marker: {
             color: [
               "#3399FF",
@@ -35,6 +34,9 @@ export default function App() {
         width: 800,
         height: 600,
         title: "2023 NZ Election Vote Share",
+        dragmode: false,
+        xaxis: { fixedrange: true },
+        yaxis: { fixedrange: true },
       },
       {
         responsive: true,
