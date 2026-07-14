@@ -13,9 +13,21 @@ export default function App() {
       chartRef.current,
       [
         {
-          x: ["Labour", "National", "Green", "ACT"],
-          y: [32.0, 27.4, 10.8, 7.6],
+          x: ["National", "Labour", "Green", "ACT", "NZ First", "Māori", "Opportunity", "Other"],
+          y: [38.1, 26.9, 11.6, 8.6, 6.1, 3.1, 2.2, 3.4],
           type: "bar",
+          dragmode: false,
+          marker: {
+            color: [
+              "#3399FF",
+              "#FF0000",
+              "#009900",
+              "#D3B641",
+              "#999999",
+              "#AA00D4)", 
+              "#F0E68C",
+              "#454545"
+          }
         },
       ],
       {
@@ -25,6 +37,7 @@ export default function App() {
       },
       {
         responsive: true,
+        displayModeBar: false,
       },
     );
 
