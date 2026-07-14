@@ -24,10 +24,11 @@ export default function App() {
               "#009900",
               "#D3B641",
               "#999999",
-              "#AA00D4)", 
+              "#AA00D4",
               "#F0E68C",
-              "#454545"
-          }
+              "#454545",
+            ],
+          },
         },
       ],
       {
@@ -37,7 +38,7 @@ export default function App() {
       },
       {
         responsive: true,
-        displayModeBar: false,
+        displayModeBar: false
       },
     );
 
