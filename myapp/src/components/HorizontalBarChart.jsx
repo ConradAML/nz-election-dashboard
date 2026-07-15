@@ -5,16 +5,17 @@ export default function HorizontalBarChart({
   gap = 14,
   labelWidth = 120,
   valueWidth = 56,
-  maxValue = 100,
+  maxValue,
 }) {
   const chartWidth = width - labelWidth - valueWidth - 24;
-  const height = data.length * (barHeight + gap);
+  const height = data.length * barHeight + (data.length - 1) * gap;
+  const scaleMax = maxValue ?? Math.max(...data.map((item) => item.value), 1);
 
   return (
     <svg width="100%" viewBox={`0 0 ${width} ${height}`} role="img">
       {data.map((item, index) => {
         const y = index * (barHeight + gap);
-        const barWidth = (item.value / maxValue) * chartWidth;
+        const barWidth = (item.value / scaleMax) * chartWidth;
 
         return (
           <g key={item.label} transform={`translate(0, ${y})`}>

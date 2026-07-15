@@ -1,4 +1,4 @@
-import HorizontalBarChart from "./components/HorizontalBarChart";
+import VerticalBarChart from "./components/VerticalBarChart";
 
 const partyData = [
   { label: "National", value: 38.1, color: "#3399FF" },
@@ -15,7 +15,7 @@ export default function App() {
   return (
     <main style={{ maxWidth: 760, margin: "40px auto", padding: "0 20px" }}>
       <h1>Party vote</h1>
-      <HorizontalBarChart data={partyData} />
+      <VerticalBarChart data={partyData} />
     </main>
   );
 }
