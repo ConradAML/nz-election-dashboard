@@ -13,9 +13,17 @@ const partyData = [
 
 export default function App() {
   return (
-    <main style={{ maxWidth: 760, margin: "40px auto", padding: "0 20px" }}>
+    <main
+  style={{
+    width: "100%",
+    maxWidth: 700,
+    margin: "40px auto",
+    padding: "0 20px",
+    boxSizing: "border-box",
+  }}
+>
       <h1>Party vote</h1>
-      <VerticalBarChart data={partyData} />
+      <VerticalBarChart data={partyData} height={560} />
     </main>
   );
 }

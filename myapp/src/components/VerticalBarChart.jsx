@@ -1,6 +1,5 @@
 export default function VerticalBarChart({
   data,
-  width = 760,
   height = 440,
   maxValue,
 }) {
@@ -11,6 +10,7 @@ export default function VerticalBarChart({
     left: 20,
   };
 
+  const width = 760;
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
   const scaleMax = maxValue ?? Math.max(...data.map((item) => item.value), 1);
@@ -25,14 +25,14 @@ export default function VerticalBarChart({
       aria-label="Party vote percentages"
     >
       <g transform={`translate(${margin.left}, ${margin.top})`}>
-        <line
+        {/* <line
           x1="0"
           y1={chartHeight}
           x2={chartWidth}
           y2={chartHeight}
           stroke="#cfcfcf"
           strokeWidth="1"
-        />
+        />*/}
 
         {data.map((item, index) => {
           const x = index * (barWidth + barGap);
@@ -45,9 +45,9 @@ export default function VerticalBarChart({
                 x={x + barWidth / 2}
                 y={y - 10}
                 textAnchor="middle"
-                fontSize="14"
-                fontWeight="600"
-                fill="#222"
+                fontSize="28"
+                fontWeight="400"
+                fill="#444444"
               >
                 {item.value.toFixed(1)}%
               </text>
@@ -63,11 +63,11 @@ export default function VerticalBarChart({
 
               <text
                 x={x + barWidth / 2}
-                y={chartHeight + 24}
+                y={chartHeight + 36}
                 textAnchor="middle"
-                fontSize="13"
+                fontSize="25"
                 fontWeight="600"
-                fill="#222"
+                fill="#444444"
               >
                 {item.label}
               </text>
