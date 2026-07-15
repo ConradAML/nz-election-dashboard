@@ -1,4 +1,4 @@
-import HorizontalBarChart from "components/HorizontalBarChart";
+import HorizontalBarChart from "./components/HorizontalBarChart";
 
 const partyData = [
   { label: "National", value: 38.1, color: "#3399FF" },
