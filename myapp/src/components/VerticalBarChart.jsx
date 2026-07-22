@@ -2,7 +2,7 @@ import { useState } from "react";
 
 function formatChange(change) {
   const sign = change > 0 ? "+" : "";
-  return `${sign}${change.toFixed(1)} pp`;
+  return `${sign}${change.toFixed(1)}`;
 }
 
 function changeColor(change) {
@@ -148,7 +148,7 @@ export default function VerticalBarChart({
                   x={x + barWidth / 2}
                   y={chartHeight + 36}
                   textAnchor="middle"
-                  fontSize="25"
+                  fontSize="20"
                   fontWeight="600"
                   fill="#444444"
                 >

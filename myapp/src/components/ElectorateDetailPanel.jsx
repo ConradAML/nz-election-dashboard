@@ -12,6 +12,54 @@ function partyColor(partyCode) {
   return PARTY_COLORS[partyCode] ?? NEUTRAL_PARTY_COLOR;
 }
 
+function textColorForBackground(hexColor) {
+  const color = hexColor.replace("#", "");
+
+  if (color.length !== 6) {
+    return "#ffffff";
+  }
+
+  const red = Number.parseInt(color.slice(0, 2), 16);
+  const green = Number.parseInt(color.slice(2, 4), 16);
+  const blue = Number.parseInt(color.slice(4, 6), 16);
+  const brightness = red * 0.299 + green * 0.587 + blue * 0.114;
+
+  return brightness > 170 ? "#1f1f1f" : "#ffffff";
+}
+
+function lightenColor(hexColor, amount = 0.78) {
+  const color = hexColor.replace("#", "");
+
+  if (color.length !== 6) {
+    return hexColor;
+  }
+
+  const toChannel = (start) => Number.parseInt(color.slice(start, start + 2), 16);
+  const mixWithWhite = (value) =>
+    Math.round(value + (255 - value) * amount)
+      .toString(16)
+      .padStart(2, "0");
+
+  const red = mixWithWhite(toChannel(0));
+  const green = mixWithWhite(toChannel(2));
+  const blue = mixWithWhite(toChannel(4));
+
+  return `#${red}${green}${blue}`;
+}
+
+function formatPartyLabel(shortName, fullName) {
+  const sourceLabel = shortName || fullName || "Leading";
+
+  if (sourceLabel === "The Opportunities Party") {
+    return "Opportunity";
+  }
+
+  return sourceLabel
+    .replace(/\s+Party$/i, "")
+    .replace(/\s+Movement$/i, "")
+    .trim();
+}
+
 function VoteRows({ rows, getKey, getLabel, getPartyLabel }) {
   const maxVotes = useMemo(
     () => Math.max(...rows.map((row) => row.votes), 0),
@@ -67,16 +115,61 @@ export default function ElectorateDetailPanel({ electorate }) {
 
   const isElectorateTab = activeTab === "electorate";
   const heading = isElectorateTab ? "Electorate vote" : "Party vote";
-  const summary = isElectorateTab
-    ? `Winner: ${electorate.winner_party_short_name || electorate.winner_party_name}`
-    : `Leading party: ${electorate.leading_party_vote_short_name || electorate.leading_party_vote_name}`;
   const totalVotes = isElectorateTab
     ? electorate.total_valid_candidate_votes
     : electorate.total_valid_party_votes;
+  const electorateWinnerColor = partyColor(electorate.winner_party_code);
+  const electorateWinnerTextColor = textColorForBackground(electorateWinnerColor);
+  const leadingCandidate = electorate.candidate_results?.[0] ?? null;
+  const runnerUpCandidate = electorate.candidate_results?.[1] ?? null;
+  const leadingPartyVote = electorate.party_vote_results?.[0] ?? null;
+  const runnerUpPartyVote = electorate.party_vote_results?.[1] ?? null;
+  const electorateMajorityVotes = Math.max(
+    (leadingCandidate?.votes ?? 0) - (runnerUpCandidate?.votes ?? 0),
+    0,
+  );
+  const electorateMajorityShare = Math.max(
+    (leadingCandidate?.vote_share ?? 0) - (runnerUpCandidate?.vote_share ?? 0),
+    0,
+  );
+  const partyVoteMajorityVotes = Math.max(
+    (leadingPartyVote?.votes ?? 0) - (runnerUpPartyVote?.votes ?? 0),
+    0,
+  );
+  const partyVoteMajorityShare = Math.max(
+    (leadingPartyVote?.vote_share ?? 0) - (runnerUpPartyVote?.vote_share ?? 0),
+    0,
+  );
+  const majorityPrimary = isElectorateTab
+    ? formatNumber(electorateMajorityVotes)
+    : `${partyVoteMajorityShare.toFixed(1)}pp`;
+  const majoritySecondary = isElectorateTab
+    ? `${electorateMajorityShare.toFixed(1)}pp`
+    : `${formatNumber(partyVoteMajorityVotes)} votes`;
+  const hasMajorityData = isElectorateTab
+    ? Boolean(leadingCandidate && runnerUpCandidate)
+    : Boolean(leadingPartyVote && runnerUpPartyVote);
+  const majorityLeaderCode = isElectorateTab
+    ? leadingCandidate?.party_code
+    : leadingPartyVote?.party_code;
+  const majorityLeaderColor = partyColor(majorityLeaderCode);
+  const majorityBackgroundColor = lightenColor(majorityLeaderColor);
+  const majorityLeaderLabel = isElectorateTab
+    ? formatPartyLabel(leadingCandidate?.party_short_name, leadingCandidate?.party_name)
+    : formatPartyLabel(leadingPartyVote?.party_short_name, leadingPartyVote?.party_name);
+  const majorityLeaderTextColor = textColorForBackground(majorityLeaderColor);
 
   return (
     <aside className="electorate-panel">
-      <h2>{electorate.electorate_name}</h2>
+      <h2
+        className="electorate-panel__name-pill"
+        style={{
+          background: electorateWinnerColor,
+          color: electorateWinnerTextColor,
+        }}
+      >
+        {electorate.electorate_name}
+      </h2>
       <div className="electorate-panel__tabs">
         <button
           type="button"
@@ -94,7 +187,30 @@ export default function ElectorateDetailPanel({ electorate }) {
         </button>
       </div>
 
-      <p className="electorate-panel__summary">{summary}</p>
+      {hasMajorityData && (
+        <div
+          className="electorate-panel__majority"
+          style={{
+            background: majorityBackgroundColor,
+            borderColor: majorityLeaderColor,
+          }}
+        >
+          <p className="electorate-panel__majority-label">
+            <span
+              className="electorate-panel__majority-pill"
+              style={{
+                background: majorityLeaderColor,
+                color: majorityLeaderTextColor,
+              }}
+            >
+              {majorityLeaderLabel}
+            </span>
+            <span>Majority: {majorityPrimary}</span>
+          </p>
+          <p className="electorate-panel__majority-subvalue">{majoritySecondary}</p>
+        </div>
+      )}
+
       <p className="electorate-panel__summary">
         Total valid votes: {formatNumber(totalVotes)}
       </p>

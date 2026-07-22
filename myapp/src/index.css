@@ -197,6 +197,53 @@ code {
   margin-bottom: 6px;
 }
 
+.electorate-panel__name-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 8px 16px;
+  border-radius: 999px;
+  margin: 0 0 14px;
+  line-height: 1.1;
+  box-sizing: border-box;
+}
+
+.electorate-panel__majority {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(244, 243, 236, 0.55);
+}
+
+.electorate-panel__majority-label {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text-h);
+}
+
+.electorate-panel__majority-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.electorate-panel__majority-subvalue {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.25;
+  color: var(--text);
+}
+
 .electorate-panel__tabs {
   display: flex;
   gap: 10px;

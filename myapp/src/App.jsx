@@ -185,7 +185,8 @@ const seatData = buildSeatData(results);
 const votesCountedData = [
   {
     label: voteCount.label,
-    value: toNumber(voteCount.value),
+    value: 67.43532, //ERASE BEFORE GOING LIVE
+    /*value: toNumber(voteCount.value),*/
     color: "#EAD349",
   },
 ];
@@ -201,25 +202,22 @@ export default function App() {
         <h2>Votes counted</h2>
         <VoteCountBar
           data={votesCountedData}
-          barHeight={28}
-          labelWidth={250}
-          labelFontSize={18}
-          valueFontSize={18}
+          barHeight={15}
+          valueFontSize={14}
         />
       </section>
 
       <section className="chart-panel">
-        <h1>Party vote</h1>
+        <h2>Party vote</h2>
         <VerticalBarChart data={partyVoteData} height={560} />
       </section>
 
       <section className="chart-panel">
-        <h1>Seat count</h1>
-        <SemiDonutChart data={seatData} height={650} />
+        <h2>Seat count</h2>
+        <SemiDonutChart data={seatData} />
       </section>
 
       <section className="chart-panel chart-panel--full">
-        <h1>Map</h1>
         <div className="map-explorer">
           <InteractiveMap
             selectedElectorateNumber={selectedElectorateNumber}

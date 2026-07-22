@@ -41,7 +41,7 @@ function legendTextColor(isSelected) {
 }
 
 const actionButtonStyle = {
-  padding: "8px 14px",
+  padding: "4px 14px",
   border: "1px solid #d8d8d8",
   borderRadius: "999px",
   background: "#ffffff",
@@ -51,10 +51,30 @@ const actionButtonStyle = {
   cursor: "pointer",
 };
 
+const legendGridStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "12px",
+};
+
+const legendButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "10px",
+  padding: "4px 14px",
+  borderRadius: "999px",
+  background: "#f8f8f8",
+  border: "1.5px solid #dddddd",
+  color: "#444444",
+  font: "inherit",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
 export default function SemiDonutChart({
   data,
   width = 760,
-  height = 420,
+  height = 570,
   strokeWidth = 110,
 }) {
   const [tooltip, setTooltip] = useState(null);
@@ -74,13 +94,13 @@ export default function SemiDonutChart({
     return selectedSet.has(item.label) ? sum + item.value : sum;
   }, 0);
   const hasMajority = coalitionSeats >= majorityThreshold;
+  const hasAllSeatsSelected = coalitionSeats === total;
   const seatsToMajority = Math.max(majorityThreshold - coalitionSeats, 0);
   const centerX = width / 2;
   const centerY = height - 200;
   const radius = Math.min(width * 0.36, height * 0.56);
   const outerRadius = radius + strokeWidth / 2;
   const innerRadius = radius - strokeWidth / 2;
-  const legendTop = centerY - radius + 360;
 
   function toggleParty(label) {
     setSelectedLabels((currentLabels) => {
@@ -123,32 +143,13 @@ export default function SemiDonutChart({
 
   let currentAngle = 180;
 
+  const svgheight = height - 100;
+
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          alignItems: "center",
-          marginBottom: "16px",
-          flexWrap: "wrap",
-        }}
-      >
-        <button type="button" style={actionButtonStyle} onClick={selectAllParties}>
-          Select all
-        </button>
-        <button
-          type="button"
-          style={actionButtonStyle}
-          onClick={deselectAllParties}
-        >
-          Deselect all
-        </button>
-      </div>
-
       <svg
         width="100%"
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`0 0 ${width} ${svgheight}`}
         role="img"
         aria-label="Seat count by party"
       >
@@ -224,30 +225,22 @@ export default function SemiDonutChart({
           fontWeight="600"
           fill="#000000"
         >
-          {coalitionSeats}
+          {coalitionSeats} seats
         </text>
-        <text
-          x={centerX}
-          y={centerY + 8}
-          textAnchor="middle"
-          fontSize="20"
-          fontWeight="500"
-          fill="#666666"
-        >
-          coalition seats
-        </text>
-        <text
-          x={centerX}
-          y={centerY + 38}
-          textAnchor="middle"
-          fontSize="18"
-          fontWeight="500"
-          fill={hasMajority ? "#15803d" : "#666666"}
-        >
-          {hasMajority
-            ? "Majority reached"
-            : `${seatsToMajority} short of majority`}
-        </text>
+        {!hasAllSeatsSelected && (
+          <text
+            x={centerX}
+            y={centerY + 38}
+            textAnchor="middle"
+            fontSize="18"
+            fontWeight="500"
+            fill={hasMajority ? "#15803d" : "#666666"}
+          >
+            {hasMajority
+              ? "Majority reached"
+              : `${seatsToMajority} short of majority`}
+          </text>
+        )}
         <text
           x={centerX}
           y={centerY + 66}
@@ -259,55 +252,65 @@ export default function SemiDonutChart({
           Click parties to build a coalition
         </text>
 
-        {data.map((item, index) => {
+      </svg>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          alignItems: "center",
+          marginBottom: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button type="button" style={actionButtonStyle} onClick={selectAllParties}>
+          Select all
+        </button>
+        <button
+          type="button"
+          style={actionButtonStyle}
+          onClick={deselectAllParties}
+        >
+          Deselect all
+        </button>
+      </div>
+
+      <div style={legendGridStyle}>
+        {data.map((item) => {
           const isSelected = selectedSet.has(item.label);
-          const row = Math.floor(index / 3);
-          const column = index % 3;
-          const x = 44 + column * 226;
-          const y = legendTop + row * 38;
 
           return (
-            <g
+            <button
               key={`${item.label}-legend`}
-              transform={`translate(${x}, ${y})`}
-              role="button"
-              tabIndex={0}
+              type="button"
               aria-pressed={isSelected}
-              style={{ cursor: "pointer" }}
+              style={{
+                ...legendButtonStyle,
+                background: isSelected ? "#f4f3ec" : "#f8f8f8",
+                borderColor: isSelected ? item.color : "#dddddd",
+                color: legendTextColor(isSelected),
+              }}
               onClick={() => toggleParty(item.label)}
               onKeyDown={(event) => handlePartyKeyDown(event, item.label)}
             >
-              <rect
-                x="-12"
-                y="-22"
-                width="186"
-                height="28"
-                rx="14"
-                fill={isSelected ? "#f4f3ec" : "#f8f8f8"}
-                stroke={isSelected ? item.color : "#dddddd"}
-                strokeWidth="1.5"
+              <span
+                aria-hidden="true"
+                style={{
+                  width: "14px",
+                  height: "14px",
+                  borderRadius: "3px",
+                  background: isSelected ? item.color : "#cfcfcf",
+                  flexShrink: 0,
+                }}
               />
-              <rect
-                x="0"
-                y="-12"
-                width="14"
-                height="14"
-                rx="3"
-                fill={isSelected ? item.color : "#cfcfcf"}
-              />
-              <text
-                x="24"
-                y="0"
-                fontSize="18"
-                fontWeight="600"
-                fill={legendTextColor(isSelected)}
-              >
+              <span>
                 {item.label} {item.value}
-              </text>
-            </g>
+              </span>
+            </button>
           );
         })}
-      </svg>
+      </div>
+
 
       {tooltip && (
         <div
