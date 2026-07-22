@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import VerticalBarChart from "./components/VerticalBarChart";
 import SemiDonutChart from "./components/SemiDonutChart";
 import VoteCountBar from "./components/VoteCountBar";
 import InteractiveMap from "./components/InteractiveMap";
 import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
+import useIsMobile from "./hooks/useIsMobile";
 import results from "../../results.json";
 import voteCount from "../../vote_count.json";
 import electorateDetails from "../../electorate_details.json";
@@ -192,9 +193,29 @@ const votesCountedData = [
 ];
 
 export default function App() {
-  const [selectedElectorateNumber, setSelectedElectorateNumber] = useState("1");
+  const isMobile = useIsMobile();
+  const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(null);
   const selectedElectorate =
     electorateDetails.by_electorate_number?.[selectedElectorateNumber] ?? null;
+
+  useEffect(() => {
+    if (isMobile || selectedElectorateNumber !== null) {
+      return;
+    }
+
+    const fallbackElectorateNumber =
+      Object.keys(electorateDetails.by_electorate_number ?? {})[0] ?? "1";
+
+    setSelectedElectorateNumber(fallbackElectorateNumber);
+  }, [isMobile, selectedElectorateNumber]);
+
+  function handleSelectElectorate(electorateNumber) {
+    setSelectedElectorateNumber(electorateNumber);
+  }
+
+  function handleCloseMobileElectorate() {
+    setSelectedElectorateNumber(null);
+  }
 
   return (
     <main className="dashboard-shell">
@@ -221,11 +242,34 @@ export default function App() {
         <div className="map-explorer">
           <InteractiveMap
             selectedElectorateNumber={selectedElectorateNumber}
-            onSelectElectorate={setSelectedElectorateNumber}
+            onSelectElectorate={handleSelectElectorate}
           />
-          <ElectorateDetailPanel electorate={selectedElectorate} />
+          {!isMobile && <ElectorateDetailPanel electorate={selectedElectorate} />}
         </div>
       </section>
+
+      {isMobile && selectedElectorate && (
+        <div
+          className="electorate-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${selectedElectorate.electorate_name} results`}
+        >
+          <button
+            type="button"
+            className="electorate-sheet__backdrop"
+            aria-label="Close electorate details"
+            onClick={handleCloseMobileElectorate}
+          />
+          <div className="electorate-sheet__panel">
+            <ElectorateDetailPanel
+              electorate={selectedElectorate}
+              onClose={handleCloseMobileElectorate}
+              showCloseButton
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

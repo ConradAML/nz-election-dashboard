@@ -97,7 +97,11 @@ function VoteRows({ rows, getKey, getLabel, getPartyLabel }) {
   );
 }
 
-export default function ElectorateDetailPanel({ electorate }) {
+export default function ElectorateDetailPanel({
+  electorate,
+  onClose,
+  showCloseButton = false,
+}) {
   const [activeTab, setActiveTab] = useState("electorate");
 
   useEffect(() => {
@@ -161,6 +165,18 @@ export default function ElectorateDetailPanel({ electorate }) {
 
   return (
     <aside className="electorate-panel">
+      {showCloseButton && (
+        <div className="electorate-panel__close-row">
+          <button
+            type="button"
+            className="electorate-panel__close-button"
+            aria-label="Close electorate details"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <h2
         className="electorate-panel__name-pill"
         style={{

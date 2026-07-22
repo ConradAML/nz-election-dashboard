@@ -26,7 +26,7 @@ export default function VerticalBarChart({
   const [tooltip, setTooltip] = useState(null);
   const isMobile = useIsMobile();
   const margin = {
-    top: isMobile ? 54 : 44,
+    top: isMobile ? 0 : 0,
     right: isMobile ? 82 : 110,
     bottom: isMobile ? 104 : 92,
     left: isMobile ? 12 : 20,
