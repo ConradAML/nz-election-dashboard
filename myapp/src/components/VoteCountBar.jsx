@@ -8,7 +8,7 @@ export default function VoteCountBar({
   labelFontSize = 18,
   valueFontSize = 18,
 }) {
-  const chartWidth = width - labelWidth - valueWidth - 24;
+  const chartWidth = width - valueWidth - 24;
   const height = data.length * barHeight + (data.length - 1) * gap;
 
   return (
