@@ -96,6 +96,12 @@ code {
   min-width: 0;
 }
 
+.dashboard-notice,
+.map-panel__loading {
+  color: var(--text-h);
+  font-size: 16px;
+}
+
 .chart-panel--full {
   grid-column: 1 / -1;
 }
@@ -147,6 +153,13 @@ code {
 
 .map-panel__viewport.is-dragging {
   cursor: grabbing;
+}
+
+.map-panel__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: inherit;
 }
 
 .map-panel__canvas {

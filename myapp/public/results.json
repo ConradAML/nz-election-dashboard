@@ -1,0 +1,189 @@
+[
+  {
+    "votes": "246473",
+    "percent_votes": "8.64",
+    "party_seats": "9",
+    "candidate_seats": "2",
+    "total_seats": "11",
+    "p_no": "5",
+    "abbrev": "ACT",
+    "short_name": "ACT New Zealand",
+    "party_name": "ACT New Zealand"
+  },
+  {
+    "votes": "5018",
+    "percent_votes": "0.17",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "52",
+    "abbrev": "AJP",
+    "short_name": "Animal Justice Party",
+    "party_name": "Animal Justice Party "
+  },
+  {
+    "votes": "13025",
+    "percent_votes": "0.45",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "36",
+    "abbrev": "ALCP",
+    "short_name": "Aotearoa Legalise Cannabis Party",
+    "party_name": "Aotearoa Legalise Cannabis Party"
+  },
+  {
+    "votes": "6786",
+    "percent_votes": "0.23",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "49",
+    "abbrev": "DNZ",
+    "short_name": "DemocracyNZ",
+    "party_name": "DemocracyNZ"
+  },
+  {
+    "votes": "9586",
+    "percent_votes": "0.33",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "51",
+    "abbrev": "FNZ",
+    "short_name": "Freedoms NZ",
+    "party_name": "Freedoms NZ (Umbrella party)"
+  },
+  {
+    "votes": "330907",
+    "percent_votes": "11.60",
+    "party_seats": "12",
+    "candidate_seats": "3",
+    "total_seats": "15",
+    "p_no": "10",
+    "abbrev": "GP",
+    "short_name": "Green Party",
+    "party_name": "Green Party"
+  },
+  {
+    "votes": "767540",
+    "percent_votes": "26.91",
+    "party_seats": "17",
+    "candidate_seats": "17",
+    "total_seats": "34",
+    "p_no": "13",
+    "abbrev": "LAB",
+    "short_name": "Labour Party",
+    "party_name": "Labour Party"
+  },
+  {
+    "votes": "2105",
+    "percent_votes": "0.07",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "55",
+    "abbrev": "LBP",
+    "short_name": "Leighton Baker",
+    "party_name": "Leighton Baker Party"
+  },
+  {
+    "votes": "1085851",
+    "percent_votes": "38.08",
+    "party_seats": "5",
+    "candidate_seats": "43",
+    "total_seats": "48",
+    "p_no": "16",
+    "abbrev": "NAT",
+    "short_name": "National Party",
+    "party_name": "National Party"
+  },
+  {
+    "votes": "4532",
+    "percent_votes": "0.15",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "34",
+    "abbrev": "NC",
+    "short_name": "New Conservatives",
+    "party_name": "New Conservatives"
+  },
+  {
+    "votes": "1530",
+    "percent_votes": "0.05",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "50",
+    "abbrev": "NNP",
+    "short_name": "New Nation Party",
+    "party_name": "New Nation Party"
+  },
+  {
+    "votes": "173553",
+    "percent_votes": "6.08",
+    "party_seats": "8",
+    "candidate_seats": "0",
+    "total_seats": "8",
+    "p_no": "17",
+    "abbrev": "NZF",
+    "short_name": "New Zealand First Party",
+    "party_name": "New Zealand First Party"
+  },
+  {
+    "votes": "34478",
+    "percent_votes": "1.20",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "54",
+    "abbrev": "NZL",
+    "short_name": "NZ Loyal",
+    "party_name": "New Zealand Loyal"
+  },
+  {
+    "votes": "16126",
+    "percent_votes": "0.56",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "37",
+    "abbrev": "NewZ",
+    "short_name": "NewZeal",
+    "party_name": "NewZeal"
+  },
+  {
+    "votes": "87844",
+    "percent_votes": "3.08",
+    "party_seats": "0",
+    "candidate_seats": "6",
+    "total_seats": "6",
+    "p_no": "14",
+    "abbrev": "TPMAO",
+    "short_name": "Te Pāti Māori",
+    "party_name": "Te Pāti Māori"
+  },
+  {
+    "votes": "63344",
+    "percent_votes": "2.22",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "24",
+    "abbrev": "TOP",
+    "short_name": "The Opportunities Party (TOP)",
+    "party_name": "The Opportunities Party (TOP)"
+  },
+  {
+    "votes": "2513",
+    "percent_votes": "0.08",
+    "party_seats": "0",
+    "candidate_seats": "0",
+    "total_seats": "0",
+    "p_no": "56",
+    "abbrev": "WRP",
+    "short_name": "Women’s Rights Party",
+    "party_name": "Women’s Rights Party"
+  }
+]

@@ -5,9 +5,7 @@ import VoteCountBar from "./components/VoteCountBar";
 import InteractiveMap from "./components/InteractiveMap";
 import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
 import useIsMobile from "./hooks/useIsMobile";
-import results from "../../results.json";
-import voteCount from "../../vote_count.json";
-import electorateDetails from "../../electorate_details.json";
+import useDashboardData from "./hooks/useDashboardData";
 
 // Parties to be included in the charts
 const PARTY_CONFIG = [
@@ -113,6 +111,25 @@ function buildResultsLookup(rows) {
   return new Map(rows.map((row) => [row.p_no, row]));
 }
 
+function formatPartyDisplayLabel(shortName, fullName) {
+  const sourceLabel = shortName || fullName || "Independent";
+
+  if (sourceLabel === "The Opportunities Party") {
+    return "Opportunity";
+  }
+
+  return sourceLabel
+    .replace(/\s+Party$/i, "")
+    .replace(/\s+Movement$/i, "")
+    .trim();
+}
+
+function fallbackSeatColor(partyCode) {
+  const seed = Number.parseInt(partyCode ?? 0, 10) || 0;
+  const hue = (seed * 47) % 360;
+  return `hsl(${hue} 38% 48%)`;
+}
+
 //Builds the party vote data for the chart
 function buildPartyVoteData(rows) {
   const lookup = buildResultsLookup(rows);
@@ -148,6 +165,7 @@ function buildPartyVoteData(rows) {
 //Builds the seat count data for the chart
 function buildSeatData(rows) {
   const lookup = buildResultsLookup(rows);
+  const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
   const seatLookup = new Map(
     PARTY_CONFIG.map((party) => {
       const row = lookup.get(party.code);
@@ -165,49 +183,64 @@ function buildSeatData(rows) {
     }),
   );
 
-  return SEAT_CHART_ORDER.map((label) => seatLookup.get(label)).filter(Boolean);
+  const extraSeatWinners = rows
+    .filter((row) => !trackedPartyCodes.has(row.p_no))
+    .map((row) => ({
+      partyCode: row.p_no,
+      label: formatPartyDisplayLabel(row.short_name, row.party_name),
+      value: toSeatNumber(row.total_seats),
+      change: toSeatNumber(row.total_seats),
+      color: fallbackSeatColor(row.p_no),
+    }))
+    .filter((party) => party.value > 0)
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+
+  return SEAT_CHART_ORDER.flatMap((label) => {
+    if (label === "Other") {
+      return extraSeatWinners;
+    }
+
+    const trackedParty = seatLookup.get(label);
+    return trackedParty ? [trackedParty] : [];
+  });
 }
-
-/* This funciton is probably not necessary but keeping it as a comment for now 
-
-function getDefaultElectorateNumber() {
-  const details = electorateDetails.by_electorate_number ?? {};
-  const exactMapMatch = Object.values(details).find(
-    (electorate) => electorate.match_method === "exact",
-  );
-
-  return exactMapMatch?.electorate_number ?? "1";
-}
-  */
-
-//Preparing chart data
-const partyVoteData = buildPartyVoteData(results);
-const seatData = buildSeatData(results);
-const votesCountedData = [
-  {
-    label: voteCount.label,
-    value: 67.43532, //ERASE BEFORE GOING LIVE
-    /*value: toNumber(voteCount.value),*/
-    color: "#EAD349",
-  },
-];
 
 export default function App() {
   const isMobile = useIsMobile();
+  const {
+    results,
+    voteCount,
+    electorateDetails,
+    electorateWinners,
+    nzMapMarkup,
+    isLoading,
+    error,
+  } = useDashboardData();
   const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(null);
-  const selectedElectorate =
-    electorateDetails.by_electorate_number?.[selectedElectorateNumber] ?? null;
+  const electorateLookup = electorateDetails?.by_electorate_number ?? {};
+  const selectedElectorate = electorateLookup[selectedElectorateNumber] ?? null;
+  const partyVoteData = buildPartyVoteData(results ?? []);
+  const seatData = buildSeatData(results ?? []);
+  const votesCountedData = voteCount
+    ? [
+        {
+          label: voteCount.label,
+          value: toNumber(voteCount.value),
+          color: "#EAD349",
+        },
+      ]
+    : [];
 
   useEffect(() => {
-    if (isMobile || selectedElectorateNumber !== null) {
+    if (isMobile || selectedElectorateNumber !== null || !electorateDetails) {
       return;
     }
 
     const fallbackElectorateNumber =
-      Object.keys(electorateDetails.by_electorate_number ?? {})[0] ?? "1";
+      Object.keys(electorateLookup)[0] ?? "1";
 
     setSelectedElectorateNumber(fallbackElectorateNumber);
-  }, [isMobile, selectedElectorateNumber]);
+  }, [electorateDetails, electorateLookup, isMobile, selectedElectorateNumber]);
 
   function handleSelectElectorate(electorateNumber) {
     setSelectedElectorateNumber(electorateNumber);
@@ -217,31 +250,51 @@ export default function App() {
     setSelectedElectorateNumber(null);
   }
 
+  if (isLoading && !results) {
+    return (
+      <main className="dashboard-shell">
+        <section className="chart-panel chart-panel--full">
+          <h2>Loading latest results…</h2>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="dashboard-shell">
+      {error && (
+        <section className="chart-panel chart-panel--full">
+          <p className="dashboard-notice">
+            Live data refresh failed. Showing the most recently loaded results.
+          </p>
+        </section>
+      )}
+
       <section className="chart-panel chart-panel--full">
         <h2>Votes counted</h2>
-        <VoteCountBar
-          data={votesCountedData}
-          barHeight={15}
-          valueFontSize={14}
-        />
+        {votesCountedData.length > 0 && (
+          <VoteCountBar
+            data={votesCountedData}
+            barHeight={15}
+            valueFontSize={14}
+          />
+        )}
       </section>
 
       <section className="chart-panel">
         <h2>Party vote</h2>
-        <VerticalBarChart data={partyVoteData} height={560} />
+        {partyVoteData.length > 0 && <VerticalBarChart data={partyVoteData} height={560} />}
       </section>
 
       <section className="chart-panel">
         <h2>Seat count</h2>
-        <SemiDonutChart data={seatData} />
+        {seatData.length > 0 && <SemiDonutChart data={seatData} />}
       </section>
 
       <section className="chart-panel chart-panel--full">
         <div className="map-explorer">
           {isMobile ? (
-            selectedElectorate ? (
+            selectedElectorate && electorateDetails ? (
               <ElectorateDetailPanel
                 electorate={selectedElectorate}
                 onClose={handleCloseMobileElectorate}
@@ -250,6 +303,8 @@ export default function App() {
               />
             ) : (
               <InteractiveMap
+                electorateWinners={electorateWinners}
+                nzMapMarkup={nzMapMarkup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
               />
@@ -257,6 +312,8 @@ export default function App() {
           ) : (
             <>
               <InteractiveMap
+                electorateWinners={electorateWinners}
+                nzMapMarkup={nzMapMarkup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
               />

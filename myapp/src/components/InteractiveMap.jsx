@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import nzMapMarkup from "../../../nzmap.svg?raw";
-import electorateWinners from "../../../electorate_winners.json";
 import {
   NEUTRAL_MAP_FILL,
   NEUTRAL_PARTY_COLOR,
@@ -65,6 +63,8 @@ function getElectorateNumberFromTarget(target) {
 }
 
 export default function InteractiveMap({
+  electorateWinners,
+  nzMapMarkup,
   selectedElectorateNumber,
   onSelectElectorate,
 }) {
@@ -77,6 +77,10 @@ export default function InteractiveMap({
   const frameRef = useRef(null);
 
   const svgMarkup = useMemo(() => {
+    if (!nzMapMarkup || !electorateWinners) {
+      return "";
+    }
+
     const cleanedMarkup = nzMapMarkup.replace(/<\?xml[\s\S]*?\?>/, "").trim();
     const parser = new DOMParser();
     const documentRoot = parser.parseFromString(cleanedMarkup, "image/svg+xml");
@@ -131,7 +135,7 @@ export default function InteractiveMap({
     }
 
     return new XMLSerializer().serializeToString(svgElement);
-  }, [selectedElectorateNumber]);
+  }, [electorateWinners, nzMapMarkup, selectedElectorateNumber]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -414,11 +418,15 @@ export default function InteractiveMap({
         onPointerCancel={handlePointerUp}
         aria-label="Interactive New Zealand electorate map"
       >
-        <div
-          className="map-panel__canvas"
-          ref={canvasRef}
-          dangerouslySetInnerHTML={{ __html: svgMarkup }}
-        />
+        {svgMarkup ? (
+          <div
+            className="map-panel__canvas"
+            ref={canvasRef}
+            dangerouslySetInnerHTML={{ __html: svgMarkup }}
+          />
+        ) : (
+          <div className="map-panel__loading">Loading map…</div>
+        )}
       </div>
     </div>
   );
