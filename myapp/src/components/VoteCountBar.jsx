@@ -1,3 +1,5 @@
+import useIsMobile from "../hooks/useIsMobile";
+
 export default function VoteCountBar({
   data,
   width = 760,
@@ -8,13 +10,16 @@ export default function VoteCountBar({
   labelFontSize = 18,
   valueFontSize = 18,
 }) {
-  const chartWidth = width - valueWidth - 24;
+  const isMobile = useIsMobile();
+  const chartWidthValue = isMobile ? 430 : width;
+  const chartValueWidth = isMobile ? 58 : valueWidth;
+  const chartWidth = chartWidthValue - chartValueWidth - 24;
   const height = data.length * barHeight + (data.length - 1) * gap;
 
   return (
     <svg
       width="100%"
-      viewBox={`0 0 ${width} ${height}`}
+      viewBox={`0 0 ${chartWidthValue} ${height}`}
       role="img"
       aria-label="Vote count progress"
     >
@@ -46,7 +51,7 @@ export default function VoteCountBar({
               x={0 + chartWidth + 12}
               y={barHeight / 2}
               dominantBaseline="middle"
-              fontSize={valueFontSize}
+              fontSize={isMobile ? Math.max(valueFontSize, 16) : valueFontSize}
               fontWeight="600"
               fill="#444444"
             >

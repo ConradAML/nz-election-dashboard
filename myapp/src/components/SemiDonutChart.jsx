@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 function polarToCartesian(cx, cy, radius, angleInDegrees) {
   const angleInRadians = (angleInDegrees * Math.PI) / 180;
@@ -78,6 +79,7 @@ export default function SemiDonutChart({
   strokeWidth = 110,
 }) {
   const [tooltip, setTooltip] = useState(null);
+  const isMobile = useIsMobile();
   const [selectedLabels, setSelectedLabels] = useState(() =>
     data.map((item) => item.label),
   );
@@ -96,11 +98,14 @@ export default function SemiDonutChart({
   const hasMajority = coalitionSeats >= majorityThreshold;
   const hasAllSeatsSelected = coalitionSeats === total;
   const seatsToMajority = Math.max(majorityThreshold - coalitionSeats, 0);
-  const centerX = width / 2;
-  const centerY = height - 200;
-  const radius = Math.min(width * 0.36, height * 0.56);
-  const outerRadius = radius + strokeWidth / 2;
-  const innerRadius = radius - strokeWidth / 2;
+  const chartWidth = isMobile ? 430 : width;
+  const chartHeight = isMobile ? 470 : height;
+  const chartStrokeWidth = isMobile ? 94 : strokeWidth;
+  const centerX = chartWidth / 2;
+  const centerY = chartHeight - (isMobile ? 172 : 200);
+  const radius = Math.min(chartWidth * 0.36, chartHeight * 0.56);
+  const outerRadius = radius + chartStrokeWidth / 2;
+  const innerRadius = radius - chartStrokeWidth / 2;
 
   function toggleParty(label) {
     setSelectedLabels((currentLabels) => {
@@ -143,13 +148,13 @@ export default function SemiDonutChart({
 
   let currentAngle = 180;
 
-  const svgheight = height - 100;
+  const svgheight = chartHeight - (isMobile ? 58 : 100);
 
   return (
     <div>
       <svg
         width="100%"
-        viewBox={`0 0 ${width} ${svgheight}`}
+        viewBox={`0 0 ${chartWidth} ${svgheight}`}
         role="img"
         aria-label="Seat count by party"
       >
@@ -157,7 +162,7 @@ export default function SemiDonutChart({
           d={describeArc(centerX, centerY, radius, 180, 360)}
           fill="none"
           stroke="#ececec"
-          strokeWidth={strokeWidth}
+          strokeWidth={chartStrokeWidth}
           strokeLinecap="butt"
         />
 
@@ -173,7 +178,7 @@ export default function SemiDonutChart({
               d={describeArc(centerX, centerY, radius, startAngle, endAngle)}
               fill="none"
               stroke={item.color}
-              strokeWidth={strokeWidth}
+              strokeWidth={chartStrokeWidth}
               strokeLinecap="butt"
               role="button"
               tabIndex={0}
@@ -210,7 +215,7 @@ export default function SemiDonutChart({
           x={centerX}
           y={centerY - outerRadius - 18}
           textAnchor="middle"
-          fontSize="24"
+          fontSize={isMobile ? "26" : "24"}
           fontWeight="600"
           fill="#000000"
         >
@@ -221,7 +226,7 @@ export default function SemiDonutChart({
           x={centerX}
           y={centerY - 26}
           textAnchor="middle"
-          fontSize="28"
+          fontSize={isMobile ? "30" : "28"}
           fontWeight="600"
           fill="#000000"
         >
@@ -232,7 +237,7 @@ export default function SemiDonutChart({
             x={centerX}
             y={centerY + 38}
             textAnchor="middle"
-            fontSize="18"
+            fontSize={isMobile ? "20" : "18"}
             fontWeight="500"
             fill={hasMajority ? "#15803d" : "#666666"}
           >
@@ -245,7 +250,7 @@ export default function SemiDonutChart({
           x={centerX}
           y={centerY + 66}
           textAnchor="middle"
-          fontSize="15"
+          fontSize={isMobile ? "17" : "15"}
           fontWeight="500"
           fill="#7a7a7a"
         >

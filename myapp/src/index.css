@@ -355,6 +355,66 @@ code {
   }
 }
 
+@media (max-width: 640px) {
+  .dashboard-shell {
+    margin: 24px auto;
+    padding: 0 14px 28px;
+    gap: 28px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  .map-panel,
+  .electorate-panel {
+    padding: 16px;
+  }
+
+  .map-panel__button,
+  .electorate-panel__tab {
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  .electorate-panel__summary {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .electorate-panel__name-pill {
+    padding: 10px 16px;
+    font-size: 24px;
+  }
+
+  .electorate-panel__majority-label {
+    font-size: 20px;
+  }
+
+  .electorate-panel__majority-pill {
+    font-size: 16px;
+    padding: 5px 10px;
+  }
+
+  .electorate-panel__majority-subvalue {
+    font-size: 16px;
+  }
+
+  .electorate-share-row__name,
+  .electorate-share-row__share {
+    font-size: 17px;
+  }
+
+  .electorate-share-row__meta {
+    font-size: 15px;
+    line-height: 1.35;
+  }
+}
+
 @media (min-width: 1200px) {
   .dashboard-shell {
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);

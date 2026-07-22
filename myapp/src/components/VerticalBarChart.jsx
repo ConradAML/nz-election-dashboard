@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 function formatChange(change) {
   const sign = change > 0 ? "+" : "";
@@ -23,17 +24,18 @@ export default function VerticalBarChart({
   maxValue,
 }) {
   const [tooltip, setTooltip] = useState(null);
+  const isMobile = useIsMobile();
   const margin = {
-    top: 44,
-    right: 110,
-    bottom: 92,
-    left: 20,
+    top: isMobile ? 54 : 44,
+    right: isMobile ? 82 : 110,
+    bottom: isMobile ? 84 : 92,
+    left: isMobile ? 12 : 20,
   };
 
-  const width = 760;
+  const width = isMobile ? 430 : 760;
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
-  const labelReserve = 56;
+  const labelReserve = isMobile ? 66 : 56;
   const plotHeight = chartHeight - labelReserve;
   const scaleMax = maxValue ?? Math.max(...data.map((item) => item.value), 1);
   const gridMax = Math.max(5, Math.ceil(scaleMax / 5) * 5);
@@ -73,7 +75,7 @@ export default function VerticalBarChart({
                     x={chartWidth + 12}
                     y={y + 5}
                     textAnchor="start"
-                    fontSize="14"
+                    fontSize={isMobile ? "16" : "14"}
                     fontWeight="600"
                     fill="#666666"
                   >
@@ -95,7 +97,7 @@ export default function VerticalBarChart({
                   x={x + barWidth / 2}
                   y={y - 26}
                   textAnchor="middle"
-                  fontSize="28"
+                  fontSize={isMobile ? "30" : "28"}
                   fontWeight="400"
                   fill="#444444"
                 >
@@ -106,7 +108,7 @@ export default function VerticalBarChart({
                   x={x + barWidth / 2}
                   y={y - 6}
                   textAnchor="middle"
-                  fontSize="16"
+                  fontSize={isMobile ? "18" : "16"}
                   fontWeight="600"
                   fill={changeColor(item.change ?? 0)}
                 >
@@ -148,7 +150,7 @@ export default function VerticalBarChart({
                   x={x + barWidth / 2}
                   y={chartHeight + 36}
                   textAnchor="middle"
-                  fontSize="20"
+                  fontSize={isMobile ? "22" : "20"}
                   fontWeight="600"
                   fill="#444444"
                 >
