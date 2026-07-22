@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nz-election-dashboard",
+  "compatibility_date": "2026-07-22",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "myapp"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
