@@ -96,6 +96,218 @@ code {
   min-width: 0;
 }
 
+.chart-panel--full {
+  grid-column: 1 / -1;
+}
+
+.map-explorer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.map-panel {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(244, 243, 236, 0.55), rgba(244, 243, 236, 0.2));
+}
+
+.map-panel__controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.map-panel__button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map-panel__viewport {
+  width: 100%;
+  min-height: 780px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: grab;
+  touch-action: none;
+}
+
+.map-panel__viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.map-panel__canvas {
+  transform-origin: 0 0;
+  will-change: transform;
+  transform: translate3d(0, 0, 0) scale(1);
+  backface-visibility: hidden;
+}
+
+.map-panel__canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.map-panel__canvas g[data-electorate-no] path,
+.map-panel__canvas path[data-electorate-no] {
+  cursor: pointer;
+  transition:
+    filter 120ms ease,
+    opacity 120ms ease,
+    stroke-width 120ms ease,
+    stroke 120ms ease;
+}
+
+.map-panel__canvas g[data-electorate-no]:hover path,
+.map-panel__canvas path[data-electorate-no]:hover {
+  filter: brightness(1.22) saturate(1.08);
+  stroke: #ffffff;
+  stroke-width: 2.8px;
+}
+
+.electorate-panel {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-sizing: border-box;
+  min-height: 858px;
+  max-height: 858px;
+  overflow-y: auto;
+}
+
+.electorate-panel__summary {
+  color: var(--text-h);
+  margin-bottom: 6px;
+}
+
+.electorate-panel__tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 16px;
+}
+
+.electorate-panel__tab {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.electorate-panel__tab.is-active {
+  background: var(--text-h);
+  color: var(--bg);
+  border-color: var(--text-h);
+}
+
+.electorate-panel__section {
+  margin-top: 28px;
+}
+
+.electorate-panel__section h3 {
+  margin: 0 0 14px;
+  font-family: var(--heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.electorate-share-list {
+  display: grid;
+  gap: 14px;
+}
+
+.electorate-share-row__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.electorate-share-row__name,
+.electorate-share-row__share {
+  color: var(--text-h);
+}
+
+.electorate-share-row__share {
+  font-weight: 600;
+}
+
+.electorate-share-row__bar {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.electorate-share-row__fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.electorate-share-row__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 5px;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.electorate-share-row__party,
+.electorate-share-row__votes {
+  color: var(--text);
+}
+
+@media (max-width: 1024px) {
+  .map-explorer {
+    grid-template-columns: 1fr;
+  }
+
+  .map-panel {
+    padding: 18px;
+  }
+
+  .map-panel__viewport {
+    min-height: 560px;
+  }
+
+  .electorate-panel {
+    padding: 18px;
+    min-height: 560px;
+    max-height: 560px;
+  }
+
+  .electorate-panel__section h3 {
+    font-size: 22px;
+  }
+}
+
 @media (min-width: 1200px) {
   .dashboard-shell {
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
