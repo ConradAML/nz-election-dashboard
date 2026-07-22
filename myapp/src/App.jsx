@@ -8,6 +8,7 @@ import results from "../../results.json";
 import voteCount from "../../vote_count.json";
 import electorateDetails from "../../electorate_details.json";
 
+// Parties to be included in the charts
 const PARTY_CONFIG = [
   {
     label: "National",
@@ -60,22 +61,27 @@ const PARTY_CONFIG = [
   },
 ];
 
+//Other parties configuration
 const OTHER_PARTY = {
   label: "Other",
   previousVote: 3.6,
+  previousSeats: 0,
   color: "#454545",
 };
 
+//Sets the order for the parties on the seat chart
 const SEAT_CHART_ORDER = [
   "Māori",
   "Green",
   "Labour",
   "Opportunity",
+  "Other",
   "NZ First",
   "National",
   "ACT",
 ];
 
+//Sorts party vote chart by dercreasing vote share but keeps Others always at the end
 function sortByValueWithPinnedLast(data, pinnedLabel) {
   const sortedItems = [...data]
     .filter((item) => item.label !== pinnedLabel)
@@ -86,25 +92,31 @@ function sortByValueWithPinnedLast(data, pinnedLabel) {
   return pinnedItem ? [...sortedItems, pinnedItem] : sortedItems;
 }
 
+//Safely converts value to a vote share number
 function toNumber(value) {
   return Number.parseFloat(value ?? 0) || 0;
 }
 
+//Safely converts value to a seat count number
 function toSeatNumber(value) {
   return Number.parseInt(value ?? 0, 10) || 0;
 }
 
+//Rounds a number to one decimal place
 function roundToOneDecimal(value) {
   return Number(value.toFixed(1));
 }
 
+//Builds a lookup map of results by party code
 function buildResultsLookup(rows) {
   return new Map(rows.map((row) => [row.p_no, row]));
 }
 
+//Builds the party vote data for the chart
 function buildPartyVoteData(rows) {
   const lookup = buildResultsLookup(rows);
 
+  //This gets the vote share and names of the parties we want to track
   const trackedParties = PARTY_CONFIG.map((party) => {
     const row = lookup.get(party.code);
     const value = toNumber(row?.percent_votes);
@@ -117,6 +129,7 @@ function buildPartyVoteData(rows) {
     };
   });
 
+  //This calculates the vote share for Others
   const totalVoteShare = rows.reduce((sum, row) => sum + toNumber(row.percent_votes), 0);
   const trackedVoteShare = trackedParties.reduce((sum, party) => sum + party.value, 0);
   const otherVoteShare = Math.max(totalVoteShare - trackedVoteShare, 0);
@@ -131,6 +144,7 @@ function buildPartyVoteData(rows) {
   return sortByValueWithPinnedLast([...trackedParties, otherParty], "Other");
 }
 
+//Builds the seat count data for the chart
 function buildSeatData(rows) {
   const lookup = buildResultsLookup(rows);
   const seatLookup = new Map(
@@ -153,6 +167,8 @@ function buildSeatData(rows) {
   return SEAT_CHART_ORDER.map((label) => seatLookup.get(label)).filter(Boolean);
 }
 
+/* This funciton is probably not necessary but keeping it as a comment for now 
+
 function getDefaultElectorateNumber() {
   const details = electorateDetails.by_electorate_number ?? {};
   const exactMapMatch = Object.values(details).find(
@@ -161,7 +177,9 @@ function getDefaultElectorateNumber() {
 
   return exactMapMatch?.electorate_number ?? "1";
 }
+  */
 
+//Preparing chart data
 const partyVoteData = buildPartyVoteData(results);
 const seatData = buildSeatData(results);
 const votesCountedData = [
@@ -173,16 +191,14 @@ const votesCountedData = [
 ];
 
 export default function App() {
-  const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(
-    getDefaultElectorateNumber(),
-  );
+  const [selectedElectorateNumber, setSelectedElectorateNumber] = useState("1");
   const selectedElectorate =
     electorateDetails.by_electorate_number?.[selectedElectorateNumber] ?? null;
 
   return (
     <main className="dashboard-shell">
       <section className="chart-panel chart-panel--full">
-        <h2>Votes counted</h2>
+        <h2>Percentage of votes counted</h2>
         <VoteCountBar
           data={votesCountedData}
           barHeight={28}

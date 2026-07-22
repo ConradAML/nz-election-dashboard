@@ -25,7 +25,7 @@ export default function VoteCountBar({
 
         return (
           <g key={item.label} transform={`translate(0, ${y})`}>
-            <text
+            {/* <text
               x="0"
               y={barHeight / 2}
               dominantBaseline="middle"
@@ -34,7 +34,7 @@ export default function VoteCountBar({
               fill="#444444"
             >
               {item.label}
-            </text>
+            </text> */}
 
             <rect
               x={labelWidth}
