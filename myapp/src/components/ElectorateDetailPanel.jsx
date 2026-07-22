@@ -163,6 +163,14 @@ export default function ElectorateDetailPanel({
     ? formatPartyLabel(leadingCandidate?.party_short_name, leadingCandidate?.party_name)
     : formatPartyLabel(leadingPartyVote?.party_short_name, leadingPartyVote?.party_name);
   const majorityLeaderTextColor = textColorForBackground(majorityLeaderColor);
+  const majorityRunnerUpCode = isElectorateTab
+    ? runnerUpCandidate?.party_code
+    : runnerUpPartyVote?.party_code;
+  const majorityRunnerUpColor = partyColor(majorityRunnerUpCode);
+  const majorityRunnerUpLabel = isElectorateTab
+    ? formatPartyLabel(runnerUpCandidate?.party_short_name, runnerUpCandidate?.party_name)
+    : formatPartyLabel(runnerUpPartyVote?.party_short_name, runnerUpPartyVote?.party_name);
+  const majorityRunnerUpTextColor = textColorForBackground(majorityRunnerUpColor);
 
   return (
     <aside className="electorate-panel">
@@ -223,6 +231,16 @@ export default function ElectorateDetailPanel({
               {majorityLeaderLabel}
             </span>
             <span>Majority: {majorityPrimary}</span>
+            <span>over</span>
+            <span
+              className="electorate-panel__majority-pill"
+              style={{
+                background: majorityRunnerUpColor,
+                color: majorityRunnerUpTextColor,
+              }}
+            >
+              {majorityRunnerUpLabel}
+            </span>
           </p>
           <p className="electorate-panel__majority-subvalue">{majoritySecondary}</p>
         </div>

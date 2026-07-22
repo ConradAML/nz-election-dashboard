@@ -38,6 +38,7 @@ export default function useDashboardData() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastSuccessfulAt, setLastSuccessfulAt] = useState(null);
 
   useEffect(() => {
     let isActive = true;
@@ -68,6 +69,7 @@ export default function useDashboardData() {
         electorateWinners,
         nzMapMarkup,
       });
+      setLastSuccessfulAt(Date.now());
       setError(null);
       setIsLoading(false);
     }
@@ -105,5 +107,7 @@ export default function useDashboardData() {
     ...data,
     isLoading,
     error,
+    lastSuccessfulAt,
+    refreshIntervalMs: REFRESH_INTERVAL_MS,
   };
 }

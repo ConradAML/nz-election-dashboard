@@ -96,10 +96,56 @@ code {
   min-width: 0;
 }
 
+.dashboard-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-h);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.dashboard-live-status__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: #15803d;
+}
+
+.dashboard-live-status.is-live .dashboard-live-status__dot {
+  animation: dashboard-live-pulse 1.4s ease-in-out infinite;
+}
+
+.dashboard-live-status.is-stale .dashboard-live-status__dot {
+  background: #8a8a8a;
+}
+
 .dashboard-notice,
 .map-panel__loading {
   color: var(--text-h);
   font-size: 16px;
+}
+
+@keyframes dashboard-live-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
 }
 
 .chart-panel--full {
@@ -405,6 +451,11 @@ code {
   .map-panel,
   .electorate-panel {
     padding: 16px;
+  }
+
+  .dashboard-live-status {
+    font-size: 15px;
+    padding: 8px 12px;
   }
 
   .map-panel__viewport {

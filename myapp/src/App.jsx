@@ -130,6 +130,18 @@ function fallbackSeatColor(partyCode) {
   return `hsl(${hue} 38% 48%)`;
 }
 
+function formatRefreshTime(timestamp) {
+  if (!timestamp) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-NZ", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(timestamp);
+}
+
 //Builds the party vote data for the chart
 function buildPartyVoteData(rows) {
   const lookup = buildResultsLookup(rows);
@@ -215,6 +227,8 @@ export default function App() {
     nzMapMarkup,
     isLoading,
     error,
+    lastSuccessfulAt,
+    refreshIntervalMs,
   } = useDashboardData();
   const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(null);
   const electorateLookup = electorateDetails?.by_electorate_number ?? {};
@@ -250,6 +264,10 @@ export default function App() {
     setSelectedElectorateNumber(null);
   }
 
+  const liveStatusMessage = error
+    ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
+    : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
+
   if (isLoading && !results) {
     return (
       <main className="dashboard-shell">
@@ -262,13 +280,16 @@ export default function App() {
 
   return (
     <main className="dashboard-shell">
-      {error && (
-        <section className="chart-panel chart-panel--full">
-          <p className="dashboard-notice">
-            Live data refresh failed. Showing the most recently loaded results.
-          </p>
-        </section>
-      )}
+      <section className="chart-panel chart-panel--full">
+        <div
+          className={`dashboard-live-status${error ? " is-stale" : " is-live"}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="dashboard-live-status__dot" aria-hidden="true" />
+          <span>{liveStatusMessage}</span>
+        </div>
+      </section>
 
       <section className="chart-panel chart-panel--full">
         <h2>Votes counted</h2>
