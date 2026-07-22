@@ -3,7 +3,6 @@ export default function VoteCountBar({
   width = 760,
   barHeight = 28,
   gap = 12,
-  labelWidth = 220,
   valueWidth = 70,
   maxValue = 100,
   labelFontSize = 18,
@@ -26,7 +25,7 @@ export default function VoteCountBar({
         return (
           <g key={item.label} transform={`translate(0, ${y})`}>
             <rect
-              x={labelWidth}
+              x={0}
               y={0}
               width={chartWidth}
               height={barHeight}
@@ -35,7 +34,7 @@ export default function VoteCountBar({
             />
 
             <rect
-              x={labelWidth}
+              x={0}
               y={0}
               width={barWidth}
               height={barHeight}
@@ -44,7 +43,7 @@ export default function VoteCountBar({
             />
 
             <text
-              x={labelWidth + chartWidth + 12}
+              x={0 + chartWidth + 12}
               y={barHeight / 2}
               dominantBaseline="middle"
               fontSize={valueFontSize}
