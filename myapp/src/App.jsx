@@ -198,7 +198,7 @@ export default function App() {
   return (
     <main className="dashboard-shell">
       <section className="chart-panel chart-panel--full">
-        <h2>Percentage of votes counted</h2>
+        <h2>Votes counted</h2>
         <VoteCountBar
           data={votesCountedData}
           barHeight={28}
