@@ -14,7 +14,9 @@ export default function VoteCountBar({
   const chartWidthValue = isMobile ? 430 : width;
   const chartValueWidth = isMobile ? 58 : valueWidth;
   const chartWidth = chartWidthValue - chartValueWidth - 24;
-  const height = data.length * barHeight + (data.length - 1) * gap;
+  const effectiveBarHeight = isMobile ? Math.max(barHeight, 22) : barHeight;
+  const effectiveGap = isMobile ? Math.max(gap, 14) : gap;
+  const height = data.length * effectiveBarHeight + (data.length - 1) * effectiveGap;
 
   return (
     <svg
@@ -24,7 +26,7 @@ export default function VoteCountBar({
       aria-label="Vote count progress"
     >
       {data.map((item, index) => {
-        const y = index * (barHeight + gap);
+        const y = index * (effectiveBarHeight + effectiveGap);
         const barWidth = (item.value / maxValue) * chartWidth;
 
         return (
@@ -33,7 +35,7 @@ export default function VoteCountBar({
               x={0}
               y={0}
               width={chartWidth}
-              height={barHeight}
+              height={effectiveBarHeight}
               rx="10"
               fill="#ececec"
             />
@@ -42,16 +44,16 @@ export default function VoteCountBar({
               x={0}
               y={0}
               width={barWidth}
-              height={barHeight}
+              height={effectiveBarHeight}
               rx="10"
               fill={item.color}
             />
 
             <text
               x={0 + chartWidth + 12}
-              y={barHeight / 2}
+              y={effectiveBarHeight / 2}
               dominantBaseline="middle"
-              fontSize={isMobile ? Math.max(valueFontSize, 16) : valueFontSize}
+              fontSize={isMobile ? Math.max(valueFontSize, 20) : valueFontSize}
               fontWeight="600"
               fill="#444444"
             >

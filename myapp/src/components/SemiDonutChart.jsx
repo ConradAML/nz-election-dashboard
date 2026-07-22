@@ -149,6 +149,17 @@ export default function SemiDonutChart({
   let currentAngle = 180;
 
   const svgheight = chartHeight - (isMobile ? 58 : 100);
+  const actionButtonStyles = {
+    ...actionButtonStyle,
+    padding: isMobile ? "8px 16px" : actionButtonStyle.padding,
+    fontSize: isMobile ? "16px" : undefined,
+  };
+  const legendButtonStyles = {
+    ...legendButtonStyle,
+    gap: isMobile ? "12px" : legendButtonStyle.gap,
+    padding: isMobile ? "8px 16px" : legendButtonStyle.padding,
+    fontSize: isMobile ? "16px" : undefined,
+  };
 
   return (
     <div>
@@ -268,12 +279,12 @@ export default function SemiDonutChart({
           flexWrap: "wrap",
         }}
       >
-        <button type="button" style={actionButtonStyle} onClick={selectAllParties}>
+        <button type="button" style={actionButtonStyles} onClick={selectAllParties}>
           Select all
         </button>
         <button
           type="button"
-          style={actionButtonStyle}
+          style={actionButtonStyles}
           onClick={deselectAllParties}
         >
           Deselect all
@@ -290,7 +301,7 @@ export default function SemiDonutChart({
               type="button"
               aria-pressed={isSelected}
               style={{
-                ...legendButtonStyle,
+                ...legendButtonStyles,
                 background: isSelected ? "#f4f3ec" : "#f8f8f8",
                 borderColor: isSelected ? item.color : "#dddddd",
                 color: legendTextColor(isSelected),
@@ -301,8 +312,8 @@ export default function SemiDonutChart({
               <span
                 aria-hidden="true"
                 style={{
-                  width: "14px",
-                  height: "14px",
+                  width: isMobile ? "16px" : "14px",
+                  height: isMobile ? "16px" : "14px",
                   borderRadius: "3px",
                   background: isSelected ? item.color : "#cfcfcf",
                   flexShrink: 0,

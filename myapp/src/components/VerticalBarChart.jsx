@@ -28,7 +28,7 @@ export default function VerticalBarChart({
   const margin = {
     top: isMobile ? 54 : 44,
     right: isMobile ? 82 : 110,
-    bottom: isMobile ? 84 : 92,
+    bottom: isMobile ? 104 : 92,
     left: isMobile ? 12 : 20,
   };
 
@@ -75,7 +75,7 @@ export default function VerticalBarChart({
                     x={chartWidth + 12}
                     y={y + 5}
                     textAnchor="start"
-                    fontSize={isMobile ? "16" : "14"}
+                    fontSize={isMobile ? "13" : "14"}
                     fontWeight="600"
                     fill="#666666"
                   >
@@ -97,7 +97,7 @@ export default function VerticalBarChart({
                   x={x + barWidth / 2}
                   y={y - 26}
                   textAnchor="middle"
-                  fontSize={isMobile ? "30" : "28"}
+                  fontSize={isMobile ? "22" : "28"}
                   fontWeight="400"
                   fill="#444444"
                 >
@@ -108,7 +108,7 @@ export default function VerticalBarChart({
                   x={x + barWidth / 2}
                   y={y - 6}
                   textAnchor="middle"
-                  fontSize={isMobile ? "18" : "16"}
+                  fontSize={isMobile ? "14" : "16"}
                   fontWeight="600"
                   fill={changeColor(item.change ?? 0)}
                 >
@@ -148,9 +148,14 @@ export default function VerticalBarChart({
 
                 <text
                   x={x + barWidth / 2}
-                  y={chartHeight + 36}
-                  textAnchor="middle"
-                  fontSize={isMobile ? "22" : "20"}
+                  y={chartHeight + 28}
+                  textAnchor={isMobile ? "start" : "middle"}
+                  transform={
+                    isMobile
+                      ? `rotate(45 ${x + barWidth / 2} ${chartHeight + 28})`
+                      : undefined
+                  }
+                  fontSize={isMobile ? "16" : "20"}
                   fontWeight="600"
                   fill="#444444"
                 >
