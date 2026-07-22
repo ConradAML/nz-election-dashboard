@@ -101,6 +101,7 @@ export default function ElectorateDetailPanel({
   electorate,
   onClose,
   showCloseButton = false,
+  closeLabel = "Close",
 }) {
   const [activeTab, setActiveTab] = useState("electorate");
 
@@ -173,7 +174,7 @@ export default function ElectorateDetailPanel({
             aria-label="Close electorate details"
             onClick={onClose}
           >
-            ×
+            {closeLabel}
           </button>
         </div>
       )}

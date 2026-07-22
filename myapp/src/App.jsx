@@ -240,36 +240,31 @@ export default function App() {
 
       <section className="chart-panel chart-panel--full">
         <div className="map-explorer">
-          <InteractiveMap
-            selectedElectorateNumber={selectedElectorateNumber}
-            onSelectElectorate={handleSelectElectorate}
-          />
-          {!isMobile && <ElectorateDetailPanel electorate={selectedElectorate} />}
+          {isMobile ? (
+            selectedElectorate ? (
+              <ElectorateDetailPanel
+                electorate={selectedElectorate}
+                onClose={handleCloseMobileElectorate}
+                showCloseButton
+                closeLabel="Back to map"
+              />
+            ) : (
+              <InteractiveMap
+                selectedElectorateNumber={selectedElectorateNumber}
+                onSelectElectorate={handleSelectElectorate}
+              />
+            )
+          ) : (
+            <>
+              <InteractiveMap
+                selectedElectorateNumber={selectedElectorateNumber}
+                onSelectElectorate={handleSelectElectorate}
+              />
+              <ElectorateDetailPanel electorate={selectedElectorate} />
+            </>
+          )}
         </div>
       </section>
-
-      {isMobile && selectedElectorate && (
-        <div
-          className="electorate-sheet"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${selectedElectorate.electorate_name} results`}
-        >
-          <button
-            type="button"
-            className="electorate-sheet__backdrop"
-            aria-label="Close electorate details"
-            onClick={handleCloseMobileElectorate}
-          />
-          <div className="electorate-sheet__panel">
-            <ElectorateDetailPanel
-              electorate={selectedElectorate}
-              onClose={handleCloseMobileElectorate}
-              showCloseButton
-            />
-          </div>
-        </div>
-      )}
     </main>
   );
 }
