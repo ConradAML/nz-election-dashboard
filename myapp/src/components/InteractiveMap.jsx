@@ -95,6 +95,22 @@ function getSelectedStrokeWidth(viewMode) {
     : DEFAULT_SELECTED_STROKE_WIDTH;
 }
 
+function getPointerGestureState(activePointers) {
+  if (activePointers.size < 2) {
+    return null;
+  }
+
+  const [firstPointer, secondPointer] = [...activePointers.values()];
+  const deltaX = secondPointer.clientX - firstPointer.clientX;
+  const deltaY = secondPointer.clientY - firstPointer.clientY;
+
+  return {
+    distance: Math.hypot(deltaX, deltaY),
+    midpointX: (firstPointer.clientX + secondPointer.clientX) / 2,
+    midpointY: (firstPointer.clientY + secondPointer.clientY) / 2,
+  };
+}
+
 function clampViewToBounds(nextView, viewport, canvas) {
   if (!viewport || !canvas) {
     return nextView;
@@ -134,6 +150,8 @@ export default function InteractiveMap({
   const canvasRef = useRef(null);
   const viewRef = useRef({ scale: 1, x: 0, y: 0 });
   const dragStateRef = useRef(null);
+  const activePointersRef = useRef(new Map());
+  const pinchStateRef = useRef(null);
   const frameRef = useRef(null);
   const hasAutoFittedRef = useRef(false);
   const electorateDetailsLookup =
@@ -390,6 +408,34 @@ export default function InteractiveMap({
   function handlePointerDown(event) {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
+    activePointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+
+    if (event.pointerType === "touch") {
+      setHoveredElectorateNumber(null);
+    }
+
+    if (activePointersRef.current.size >= 2) {
+      const gestureState = getPointerGestureState(activePointersRef.current);
+
+      dragStateRef.current = null;
+      setIsDragging(true);
+
+      if (gestureState) {
+        pinchStateRef.current = {
+          startDistance: gestureState.distance,
+          startMidpointX: gestureState.midpointX,
+          startMidpointY: gestureState.midpointY,
+          startScale: viewRef.current.scale,
+          startX: viewRef.current.x,
+          startY: viewRef.current.y,
+        };
+      }
+
+      return;
+    }
 
     dragStateRef.current = {
       pointerId: event.pointerId,
@@ -406,13 +452,47 @@ export default function InteractiveMap({
 
   function handleMapPointerMove(event) {
     const viewportRect = event.currentTarget.getBoundingClientRect();
-    const dragState = dragStateRef.current;
-
-    setHoveredElectorateNumber(getElectorateNumberFromTarget(event.target));
-    setTooltipPosition({
-      x: event.clientX - viewportRect.left,
-      y: event.clientY - viewportRect.top,
+    activePointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
     });
+
+    if (event.pointerType === "touch") {
+      setHoveredElectorateNumber(null);
+    } else {
+      setHoveredElectorateNumber(getElectorateNumberFromTarget(event.target));
+      setTooltipPosition({
+        x: event.clientX - viewportRect.left,
+        y: event.clientY - viewportRect.top,
+      });
+    }
+
+    if (activePointersRef.current.size >= 2 && pinchStateRef.current) {
+      const gestureState = getPointerGestureState(activePointersRef.current);
+      const pinchState = pinchStateRef.current;
+
+      if (!gestureState || pinchState.startDistance <= 0) {
+        return;
+      }
+
+      const nextScale =
+        pinchState.startScale * (gestureState.distance / pinchState.startDistance);
+      const boundedScale = clamp(nextScale, getMinScale(viewMode), MAX_SCALE);
+      const contentX =
+        (pinchState.startMidpointX - pinchState.startX) / pinchState.startScale;
+      const contentY =
+        (pinchState.startMidpointY - pinchState.startY) / pinchState.startScale;
+
+      setIsDragging(true);
+      updateView({
+        scale: boundedScale,
+        x: gestureState.midpointX - contentX * boundedScale,
+        y: gestureState.midpointY - contentY * boundedScale,
+      });
+      return;
+    }
+
+    const dragState = dragStateRef.current;
 
     if (!dragState || dragState.pointerId !== event.pointerId) {
       return;
@@ -441,13 +521,39 @@ export default function InteractiveMap({
   }
 
   function handlePointerUp(event) {
+    activePointersRef.current.delete(event.pointerId);
     const dragState = dragStateRef.current;
 
-    if (!dragState || dragState.pointerId !== event.pointerId) {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (pinchStateRef.current) {
+      pinchStateRef.current = null;
+
+      const remainingPointers = [...activePointersRef.current.entries()];
+
+      if (remainingPointers.length === 1) {
+        const [remainingPointerId, remainingPointer] = remainingPointers[0];
+
+        dragStateRef.current = {
+          pointerId: remainingPointerId,
+          startClientX: remainingPointer.clientX,
+          startClientY: remainingPointer.clientY,
+          startX: viewRef.current.x,
+          startY: viewRef.current.y,
+          moved: false,
+          electorateNumber: null,
+        };
+        setIsDragging(false);
+        return;
+      }
+
+      dragStateRef.current = null;
+      setIsDragging(false);
       return;
     }
 
-    event.currentTarget.releasePointerCapture(event.pointerId);
     if (!dragState.moved && dragState.electorateNumber && onSelectElectorate) {
       onSelectElectorate(dragState.electorateNumber);
     }
@@ -459,9 +565,11 @@ export default function InteractiveMap({
     setHoveredElectorateNumber(null);
   }
 
-  function handlePointerCancel() {
+  function handlePointerCancel(event) {
+    activePointersRef.current.delete(event.pointerId);
+    pinchStateRef.current = null;
     dragStateRef.current = null;
-    setIsDragging(false);
+    setIsDragging(activePointersRef.current.size >= 2);
   }
 
   function handleWheel(event) {
@@ -513,6 +621,8 @@ export default function InteractiveMap({
 
   function resetView() {
     fitViewToViewport();
+    activePointersRef.current.clear();
+    pinchStateRef.current = null;
     dragStateRef.current = null;
     setIsDragging(false);
   }
