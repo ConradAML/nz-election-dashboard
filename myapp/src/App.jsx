@@ -344,14 +344,7 @@ export default function App() {
       <section className="chart-panel chart-panel--full">
         <div className="map-explorer">
           {isMobile ? (
-            selectedElectorate && electorateDetails ? (
-              <ElectorateDetailPanel
-                electorate={selectedElectorate}
-                onClose={handleCloseMobileElectorate}
-                showCloseButton
-                closeLabel="Back to map"
-              />
-            ) : (
+            <div className="map-explorer__mobile">
               <InteractiveMap
                 electorateWinners={electorateWinners}
                 electorateDetails={electorateDetails}
@@ -361,7 +354,17 @@ export default function App() {
                 viewMode={mapViewMode}
                 onViewModeChange={setMapViewMode}
               />
-            )
+              {selectedElectorate && electorateDetails && (
+                <div className="map-explorer__mobile-overlay">
+                  <ElectorateDetailPanel
+                    electorate={selectedElectorate}
+                    onClose={handleCloseMobileElectorate}
+                    showCloseButton
+                    closeLabel="Back to map"
+                  />
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <InteractiveMap

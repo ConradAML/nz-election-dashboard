@@ -196,6 +196,17 @@ code {
   align-items: start;
 }
 
+.map-explorer__mobile {
+  position: relative;
+  min-width: 0;
+}
+
+.map-explorer__mobile-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
 .map-panel {
   width: 100%;
   border: 1px solid var(--border);
@@ -598,6 +609,18 @@ code {
     min-height: auto;
     max-height: none;
     overflow: visible;
+  }
+
+  .map-explorer__mobile-overlay {
+    overflow: hidden;
+  }
+
+  .map-explorer__mobile-overlay .electorate-panel {
+    height: 100%;
+    min-height: 100%;
+    max-height: none;
+    overflow-y: auto;
+    background: #ffffff;
   }
 }
 
