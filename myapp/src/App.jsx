@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import VerticalBarChart from "./components/VerticalBarChart";
 import SemiDonutChart from "./components/SemiDonutChart";
 import VoteCountBar from "./components/VoteCountBar";
@@ -234,6 +234,10 @@ export default function App() {
   const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(null);
   const [partyVoteMode, setPartyVoteMode] = useState("share");
   const [mapViewMode, setMapViewMode] = useState("cartographic");
+  const savedMapViewsRef = useRef({
+    cartographic: null,
+    hex: null,
+  });
   const electorateLookup = electorateDetails?.by_electorate_number ?? {};
   const selectedElectorate = electorateLookup[selectedElectorateNumber] ?? null;
   const activeMapMarkup =
@@ -267,6 +271,10 @@ export default function App() {
 
   function handleCloseMobileElectorate() {
     setSelectedElectorateNumber(null);
+  }
+
+  function handleMapViewSnapshot(nextView) {
+    savedMapViewsRef.current[mapViewMode] = nextView;
   }
 
   const liveStatusMessage = error
@@ -353,6 +361,8 @@ export default function App() {
                 onSelectElectorate={handleSelectElectorate}
                 viewMode={mapViewMode}
                 onViewModeChange={setMapViewMode}
+                savedView={savedMapViewsRef.current[mapViewMode]}
+                onViewSnapshot={handleMapViewSnapshot}
               />
               {selectedElectorate && electorateDetails && (
                 <div className="map-explorer__mobile-overlay">
@@ -375,6 +385,8 @@ export default function App() {
                 onSelectElectorate={handleSelectElectorate}
                 viewMode={mapViewMode}
                 onViewModeChange={setMapViewMode}
+                savedView={savedMapViewsRef.current[mapViewMode]}
+                onViewSnapshot={handleMapViewSnapshot}
               />
               <ElectorateDetailPanel electorate={selectedElectorate} />
             </>

@@ -146,6 +146,8 @@ export default function InteractiveMap({
   onSelectElectorate,
   viewMode = "cartographic",
   onViewModeChange,
+  savedView,
+  onViewSnapshot,
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredElectorateNumber, setHoveredElectorateNumber] = useState(null);
@@ -295,7 +297,11 @@ export default function InteractiveMap({
     canvas.__scheduleTransform = scheduleTransform;
     scheduleTransform();
 
-    if (!hasAutoFittedRef.current) {
+    if (savedView) {
+      viewRef.current = { ...savedView };
+      hasAutoFittedRef.current = true;
+      scheduleTransform();
+    } else if (!hasAutoFittedRef.current) {
       const fitFrameId = window.requestAnimationFrame(() => {
         fitViewToViewport();
         hasAutoFittedRef.current = true;
@@ -318,7 +324,7 @@ export default function InteractiveMap({
       }
       delete canvas.__scheduleTransform;
     };
-  }, [svgMarkup]);
+  }, [savedView, svgMarkup]);
 
   const hoveredElectorate = hoveredElectorateNumber
     ? electorateDetailsLookup[hoveredElectorateNumber] ?? null
@@ -352,6 +358,7 @@ export default function InteractiveMap({
       viewportRef.current,
       canvasRef.current,
     );
+    onViewSnapshot?.({ ...viewRef.current });
     scheduleTransform();
   }
 
