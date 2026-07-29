@@ -230,8 +230,7 @@ export default function ElectorateDetailPanel({
             >
               {majorityLeaderLabel}
             </span>
-            <span>Majority: {majorityPrimary}</span>
-            <span>over</span>
+            <span>Majority: {majorityPrimary} over</span>
             <span
               className="electorate-panel__majority-pill"
               style={{

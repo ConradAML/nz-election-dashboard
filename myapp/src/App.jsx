@@ -225,14 +225,19 @@ export default function App() {
     electorateDetails,
     electorateWinners,
     nzMapMarkup,
+    nzHexMapMarkup,
     isLoading,
     error,
     lastSuccessfulAt,
     refreshIntervalMs,
   } = useDashboardData();
   const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(null);
+  const [partyVoteMode, setPartyVoteMode] = useState("share");
+  const [mapViewMode, setMapViewMode] = useState("cartographic");
   const electorateLookup = electorateDetails?.by_electorate_number ?? {};
   const selectedElectorate = electorateLookup[selectedElectorateNumber] ?? null;
+  const activeMapMarkup =
+    mapViewMode === "hex" ? nzHexMapMarkup ?? nzMapMarkup : nzMapMarkup;
   const partyVoteData = buildPartyVoteData(results ?? []);
   const seatData = buildSeatData(results ?? []);
   const votesCountedData = voteCount
@@ -303,8 +308,32 @@ export default function App() {
       </section>
 
       <section className="chart-panel">
-        <h2>Party vote</h2>
-        {partyVoteData.length > 0 && <VerticalBarChart data={partyVoteData} height={560} />}
+        <div className="chart-header">
+          <h2>Party vote</h2>
+          <div className="chart-toggle" role="tablist" aria-label="Party vote chart mode">
+            <button
+              type="button"
+              className={`chart-toggle__button${partyVoteMode === "share" ? " is-active" : ""}`}
+              onClick={() => setPartyVoteMode("share")}
+            >
+              Vote share
+            </button>
+            <button
+              type="button"
+              className={`chart-toggle__button${partyVoteMode === "change" ? " is-active" : ""}`}
+              onClick={() => setPartyVoteMode("change")}
+            >
+              Change
+            </button>
+          </div>
+        </div>
+        {partyVoteData.length > 0 && (
+          <VerticalBarChart
+            data={partyVoteData}
+            height={560}
+            mode={partyVoteMode}
+          />
+        )}
       </section>
 
       <section className="chart-panel">
@@ -325,18 +354,24 @@ export default function App() {
             ) : (
               <InteractiveMap
                 electorateWinners={electorateWinners}
-                nzMapMarkup={nzMapMarkup}
+                electorateDetails={electorateDetails}
+                nzMapMarkup={activeMapMarkup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
+                viewMode={mapViewMode}
+                onViewModeChange={setMapViewMode}
               />
             )
           ) : (
             <>
               <InteractiveMap
                 electorateWinners={electorateWinners}
-                nzMapMarkup={nzMapMarkup}
+                electorateDetails={electorateDetails}
+                nzMapMarkup={activeMapMarkup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
+                viewMode={mapViewMode}
+                onViewModeChange={setMapViewMode}
               />
               <ElectorateDetailPanel electorate={selectedElectorate} />
             </>

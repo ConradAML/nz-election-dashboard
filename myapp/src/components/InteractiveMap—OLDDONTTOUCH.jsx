@@ -6,18 +6,64 @@ import {
 } from "../constants/partyColors";
 
 const DEFAULT_MIN_SCALE = 0.45;
-const HEX_MIN_SCALE = 0.28;
+const HEX_MIN_SCALE = 0.3;
 const MAX_SCALE = 8;
 const ZOOM_FACTOR = 1.08;
 const CLICK_DRAG_THRESHOLD = 8;
 const MIN_VISIBLE_PX = 96;
-const SELECTED_STROKE_COLOR = "#f4f1eb";
-const DEFAULT_SELECTED_STROKE_WIDTH = "2.8px";
-const HEX_SELECTED_STROKE_WIDTH = "8px";
-const SELECTED_FILL_LIGHTEN = 0.22;
+const HIGHLIGHT_STROKE_COLOR = "#f4f1eb";
+const HIGHLIGHT_STROKE_WIDTH = "5px";
+const HIGHLIGHT_FILL_LIGHTEN = 0.4;
 const DEFAULT_FIT_PADDING = 20;
-const HEX_FIT_PADDING = 40;
-const HEX_FIT_SCALE_MULTIPLIER = 0.5;
+const HEX_FIT_PADDING = 34;
+const HEX_FIT_SCALE_MULTIPLIER = 0.8;
+const CITY_PRESETS = {
+  Auckland: [
+    "Auckland_Central",
+    "Botany",
+    "Epsom",
+    "Mangere",
+    "Manurewa",
+    "Maungakiekie",
+    "Mt_Albert",
+    "Mt_Roskill",
+    "North_Shore",
+    "Northcote",
+    "Pakuranga",
+    "Papakura",
+    "Takanini",
+    "Tamaki",
+    "Upper_Harbour",
+    "Whangaparaoa",
+  ],
+  Christchurch: [
+    "Banks_Peninsula",
+    "Christchurch_Central",
+    "Christchurch_East",
+    "Ilam",
+    "Selwyn",
+    "Wigram",
+  ],
+  Wellington: [
+    "Hutt_South",
+    "Kenepuru",
+    "Remutaka",
+    "Wellington_Bays",
+    "Wellington_North",
+  ],
+};
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getMinScale(viewMode) {
+  return viewMode === "hex" ? HEX_MIN_SCALE : DEFAULT_MIN_SCALE;
+}
+
+function styleWithRule(existingStyle, rule) {
+  return existingStyle ? `${existingStyle} ${rule}` : rule;
+}
 
 function normalizeElectorateKey(value) {
   return (value ?? "")
@@ -39,12 +85,9 @@ function normalizeElectorateKey(value) {
     .replace(/otahuhu/g, "otahuhu")
     .replace(/kaikoura/g, "kaikoura")
     .replace(/waitakere/g, "waitakere")
+    .replace(/_/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "");
-}
-
-function styleWithRule(existingStyle, rule) {
-  return existingStyle ? `${existingStyle} ${rule}` : rule;
 }
 
 function lightenColor(hexColor, amount) {
@@ -73,26 +116,6 @@ function getElectorateNumberFromTarget(target) {
 
   const layer = target.closest("[data-electorate-no]");
   return layer?.getAttribute("data-electorate-no") ?? null;
-}
-
-function getShapesForLayer(layer) {
-  return layer.tagName.toLowerCase() === "path"
-    ? [layer]
-    : layer.querySelectorAll("path");
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function getMinScale(viewMode) {
-  return viewMode === "hex" ? HEX_MIN_SCALE : DEFAULT_MIN_SCALE;
-}
-
-function getSelectedStrokeWidth(viewMode) {
-  return viewMode === "hex"
-    ? HEX_SELECTED_STROKE_WIDTH
-    : DEFAULT_SELECTED_STROKE_WIDTH;
 }
 
 function clampViewToBounds(nextView, viewport, canvas) {
@@ -129,13 +152,21 @@ export default function InteractiveMap({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredElectorateNumber, setHoveredElectorateNumber] = useState(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const viewportRef = useRef(null);
   const canvasRef = useRef(null);
+  const svgRootRef = useRef(null);
+  const highlightLayersRef = useRef(new Map());
+  const tooltipRef = useRef(null);
+  const tooltipPositionRef = useRef({ x: 0, y: 0 });
+  const hoveredElectorateNumberRef = useRef(null);
   const viewRef = useRef({ scale: 1, x: 0, y: 0 });
   const dragStateRef = useRef(null);
   const frameRef = useRef(null);
   const hasAutoFittedRef = useRef(false);
+  const previousHighlightRef = useRef({
+    hoveredElectorateNumber: null,
+    selectedElectorateNumber: null,
+  });
   const electorateDetailsLookup =
     electorateDetails?.by_electorate_number ?? {};
 
@@ -151,9 +182,13 @@ export default function InteractiveMap({
     const byElectorateNumber = electorateWinners.by_electorate_number ?? {};
     const bySvgId = electorateWinners.by_svg_id ?? {};
     const byNormalizedKey = new Map();
-    const selectedStrokeWidth = getSelectedStrokeWidth(viewMode);
-    let hoveredLayer = null;
-    let selectedLayer = null;
+    const highlightRoot = documentRoot.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "g",
+    );
+
+    highlightRoot.setAttribute("data-highlight-root", "true");
+    highlightRoot.setAttribute("pointer-events", "none");
 
     for (const [svgId, entry] of Object.entries(bySvgId)) {
       byNormalizedKey.set(normalizeElectorateKey(svgId), entry);
@@ -172,131 +207,79 @@ export default function InteractiveMap({
         byNormalizedKey.get(normalizedLayerId);
       const electorateNumber =
         mapEntry?.electorate_number ?? seededElectorateNumber ?? null;
-      const hasElectorateMatch = Boolean(electorateNumber);
-      const isSelected =
-        hasElectorateMatch && electorateNumber === selectedElectorateNumber;
-      const isHovered =
-        hasElectorateMatch &&
-        electorateNumber === hoveredElectorateNumber &&
-        electorateNumber !== selectedElectorateNumber;
-      const isActive = isSelected || isHovered;
       const baseFill =
         PARTY_COLORS[mapEntry?.winner_party_code] ??
         (mapEntry?.has_svg_match ? NEUTRAL_PARTY_COLOR : NEUTRAL_MAP_FILL);
-      const fill = isActive
-        ? lightenColor(baseFill, SELECTED_FILL_LIGHTEN)
-        : baseFill;
-
-      if (!hasElectorateMatch && layer.tagName.toLowerCase() === "g") {
-        continue;
-      }
+      const highlightFill = lightenColor(baseFill, HIGHLIGHT_FILL_LIGHTEN);
 
       if (electorateNumber) {
         layer.setAttribute("data-electorate-no", electorateNumber);
       }
 
-      const shapes = getShapesForLayer(layer);
+      layer.setAttribute("data-base-fill", baseFill);
+
+      const shapes =
+        layer.tagName.toLowerCase() === "path"
+          ? [layer]
+          : layer.querySelectorAll("path");
 
       for (const shape of shapes) {
         let nextStyle = shape.getAttribute("style") || "";
-        nextStyle = styleWithRule(nextStyle, `fill: ${fill};`);
+        nextStyle = styleWithRule(nextStyle, `fill: ${baseFill};`);
         nextStyle = styleWithRule(nextStyle, "pointer-events: auto;");
 
-        if (isActive) {
-          nextStyle = styleWithRule(nextStyle, `stroke: ${SELECTED_STROKE_COLOR};`);
-          nextStyle = styleWithRule(
-            nextStyle,
-            `stroke-width: ${selectedStrokeWidth};`,
-          );
-          nextStyle = styleWithRule(nextStyle, "stroke-linejoin: round;");
-          nextStyle = styleWithRule(nextStyle, "stroke-linecap: round;");
-          nextStyle = styleWithRule(nextStyle, "vector-effect: non-scaling-stroke;");
-          shape.setAttribute("stroke", SELECTED_STROKE_COLOR);
-          shape.setAttribute("stroke-width", selectedStrokeWidth);
-        }
+        shape.setAttribute("style", nextStyle.trim());
+        shape.setAttribute("fill", baseFill);
+      }
+
+      if (!electorateNumber) {
+        continue;
+      }
+
+      const highlightLayer = layer.cloneNode(true);
+
+      highlightLayer.removeAttribute("id");
+      highlightLayer.setAttribute("data-highlight-for", electorateNumber);
+      highlightLayer.setAttribute(
+        "style",
+        "pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 120ms ease;",
+      );
+
+      const highlightShapes =
+        highlightLayer.tagName.toLowerCase() === "path"
+          ? [highlightLayer]
+          : highlightLayer.querySelectorAll("path");
+
+      for (const shape of highlightShapes) {
+        shape.removeAttribute("id");
+
+        let nextStyle = shape.getAttribute("style") || "";
+        nextStyle = styleWithRule(nextStyle, `fill: ${highlightFill};`);
+        nextStyle = styleWithRule(nextStyle, `stroke: ${HIGHLIGHT_STROKE_COLOR};`);
+        nextStyle = styleWithRule(nextStyle, `stroke-width: ${HIGHLIGHT_STROKE_WIDTH};`);
+        nextStyle = styleWithRule(nextStyle, "stroke-linejoin: round;");
+        nextStyle = styleWithRule(nextStyle, "stroke-linecap: round;");
+        nextStyle = styleWithRule(nextStyle, "vector-effect: non-scaling-stroke;");
+        nextStyle = styleWithRule(nextStyle, "paint-order: stroke;");
+        nextStyle = styleWithRule(nextStyle, "pointer-events: none;");
 
         shape.setAttribute("style", nextStyle.trim());
-        shape.setAttribute("fill", fill);
+        shape.setAttribute("fill", highlightFill);
+        shape.setAttribute("stroke", HIGHLIGHT_STROKE_COLOR);
+        shape.setAttribute("stroke-width", HIGHLIGHT_STROKE_WIDTH);
       }
 
-      if (isHovered) {
-        hoveredLayer = layer;
-      }
-
-      if (isSelected) {
-        selectedLayer = layer;
-      }
+      highlightRoot.appendChild(highlightLayer);
     }
 
-    if (hoveredLayer) {
-      svgElement.appendChild(hoveredLayer);
-    }
-
-    if (selectedLayer) {
-      svgElement.appendChild(selectedLayer);
-    }
+    svgElement.appendChild(highlightRoot);
 
     return new XMLSerializer().serializeToString(svgElement);
-  }, [
-    electorateWinners,
-    hoveredElectorateNumber,
-    nzMapMarkup,
-    selectedElectorateNumber,
-    viewMode,
-  ]);
+  }, [electorateWinners, nzMapMarkup]);
 
   useEffect(() => {
     hasAutoFittedRef.current = false;
   }, [nzMapMarkup]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-
-    if (!canvas) {
-      return undefined;
-    }
-
-    function applyTransform() {
-      const { x, y, scale } = viewRef.current;
-      canvas.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
-      frameRef.current = null;
-    }
-
-    function scheduleTransform() {
-      if (frameRef.current !== null) {
-        return;
-      }
-
-      frameRef.current = window.requestAnimationFrame(applyTransform);
-    }
-
-    canvas.__scheduleTransform = scheduleTransform;
-    scheduleTransform();
-
-    if (!hasAutoFittedRef.current) {
-      const fitFrameId = window.requestAnimationFrame(() => {
-        fitViewToViewport();
-        hasAutoFittedRef.current = true;
-      });
-
-      return () => {
-        window.cancelAnimationFrame(fitFrameId);
-        if (frameRef.current !== null) {
-          window.cancelAnimationFrame(frameRef.current);
-          frameRef.current = null;
-        }
-        delete canvas.__scheduleTransform;
-      };
-    }
-
-    return () => {
-      if (frameRef.current !== null) {
-        window.cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-      delete canvas.__scheduleTransform;
-    };
-  }, [svgMarkup]);
 
   const hoveredElectorate = hoveredElectorateNumber
     ? electorateDetailsLookup[hoveredElectorateNumber] ?? null
@@ -319,9 +302,214 @@ export default function InteractiveMap({
     || hoveredElectorate?.winner_party_name
     || "Independent";
 
+  useEffect(() => {
+    const tooltip = tooltipRef.current;
+
+    if (!tooltip) {
+      return;
+    }
+
+    tooltip.style.left = `${tooltipPositionRef.current.x}px`;
+    tooltip.style.top = `${tooltipPositionRef.current.y}px`;
+  }, [hoveredElectorateNumber]);
+
+  useEffect(() => {
+    previousHighlightRef.current = {
+      hoveredElectorateNumber: null,
+      selectedElectorateNumber: null,
+    };
+    hoveredElectorateNumberRef.current = null;
+    highlightLayersRef.current = new Map();
+  }, [svgMarkup]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return undefined;
+    }
+
+    function applyTransform() {
+      const { x, y, scale } = viewRef.current;
+      canvas.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+      frameRef.current = null;
+    }
+
+    function scheduleTransform() {
+      if (frameRef.current !== null) {
+        return;
+      }
+
+      frameRef.current = window.requestAnimationFrame(applyTransform);
+    }
+
+    canvas.dataset.scheduleTransform = "ready";
+    canvas.__scheduleTransform = scheduleTransform;
+    svgRootRef.current = canvas.querySelector("svg");
+
+    const nextHighlightLayers = new Map();
+
+    for (const layer of svgRootRef.current?.querySelectorAll(
+      "[data-highlight-for]",
+    ) ?? []) {
+      const electorateNumber = layer.getAttribute("data-highlight-for");
+
+      if (!electorateNumber) {
+        continue;
+      }
+
+      const currentLayers = nextHighlightLayers.get(electorateNumber) ?? [];
+      currentLayers.push(layer);
+      nextHighlightLayers.set(electorateNumber, currentLayers);
+    }
+
+    highlightLayersRef.current = nextHighlightLayers;
+    scheduleTransform();
+
+    if (!hasAutoFittedRef.current) {
+      const fitFrameId = window.requestAnimationFrame(() => {
+        fitViewToViewport();
+        hasAutoFittedRef.current = true;
+      });
+
+      return () => {
+        window.cancelAnimationFrame(fitFrameId);
+        if (frameRef.current !== null) {
+          window.cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
+        svgRootRef.current = null;
+        highlightLayersRef.current = new Map();
+        delete canvas.__scheduleTransform;
+      };
+    }
+
+    return () => {
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      svgRootRef.current = null;
+      highlightLayersRef.current = new Map();
+      delete canvas.__scheduleTransform;
+    };
+  }, [svgMarkup]);
+
+  useEffect(() => {
+    if (!svgRootRef.current) {
+      return;
+    }
+
+    const previousHighlight = previousHighlightRef.current;
+
+    function getHighlightLayers(electorateNumber) {
+      if (!electorateNumber) {
+        return [];
+      }
+
+      return highlightLayersRef.current.get(String(electorateNumber)) ?? [];
+    }
+
+    function hideElectorateHighlight(electorateNumber) {
+      for (const layer of getHighlightLayers(electorateNumber)) {
+        layer.style.opacity = "0";
+        layer.style.visibility = "hidden";
+      }
+    }
+
+    function showElectorateHighlight(electorateNumber) {
+      for (const layer of getHighlightLayers(electorateNumber)) {
+        layer.parentNode?.appendChild(layer);
+        layer.style.opacity = "1";
+        layer.style.visibility = "visible";
+      }
+    }
+
+    const resetTargets = new Set([
+      previousHighlight.hoveredElectorateNumber,
+      previousHighlight.selectedElectorateNumber,
+    ]);
+
+    for (const electorateNumber of resetTargets) {
+      if (
+        electorateNumber &&
+        electorateNumber !== hoveredElectorateNumber &&
+        electorateNumber !== selectedElectorateNumber
+      ) {
+        hideElectorateHighlight(electorateNumber);
+      }
+    }
+
+    if (hoveredElectorateNumber) {
+      hideElectorateHighlight(hoveredElectorateNumber);
+    }
+
+    if (selectedElectorateNumber) {
+      hideElectorateHighlight(selectedElectorateNumber);
+    }
+
+    if (selectedElectorateNumber) {
+      showElectorateHighlight(selectedElectorateNumber);
+    }
+
+    if (
+      hoveredElectorateNumber &&
+      hoveredElectorateNumber !== selectedElectorateNumber
+    ) {
+      showElectorateHighlight(hoveredElectorateNumber);
+    }
+
+    previousHighlightRef.current = {
+      hoveredElectorateNumber,
+      selectedElectorateNumber,
+    };
+  }, [hoveredElectorateNumber, selectedElectorateNumber, svgMarkup]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+
+    if (!viewport) {
+      return undefined;
+    }
+
+    function handleViewportWheel(event) {
+      event.preventDefault();
+
+      const containerRect = viewport.getBoundingClientRect();
+      const direction = event.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+
+      zoomAtPoint(
+        event.clientX,
+        event.clientY,
+        viewRef.current.scale * direction,
+        containerRect,
+      );
+    }
+
+    viewport.addEventListener("wheel", handleViewportWheel, { passive: false });
+
+    return () => {
+      viewport.removeEventListener("wheel", handleViewportWheel);
+    };
+  }, [viewMode]);
+
   function scheduleTransform() {
     const canvas = canvasRef.current;
     canvas?.__scheduleTransform?.();
+  }
+
+  function updateTooltipPosition(clientX, clientY, viewportRect) {
+    const nextPosition = {
+      x: clientX - viewportRect.left,
+      y: clientY - viewportRect.top,
+    };
+
+    tooltipPositionRef.current = nextPosition;
+
+    if (tooltipRef.current) {
+      tooltipRef.current.style.left = `${nextPosition.x}px`;
+      tooltipRef.current.style.top = `${nextPosition.y}px`;
+    }
   }
 
   function updateView(nextView) {
@@ -351,11 +539,13 @@ export default function InteractiveMap({
     }
 
     const padding = viewMode === "hex" ? HEX_FIT_PADDING : DEFAULT_FIT_PADDING;
+    const fitScaleMultiplier =
+      viewMode === "hex" ? HEX_FIT_SCALE_MULTIPLIER : 1;
     const fittedScale = clamp(
       Math.min(
         (viewportWidth - padding * 2) / contentWidth,
         (viewportHeight - padding * 2) / contentHeight,
-      ) * (viewMode === "hex" ? HEX_FIT_SCALE_MULTIPLIER : 1),
+      ) * fitScaleMultiplier,
       getMinScale(viewMode),
       MAX_SCALE,
     );
@@ -400,19 +590,20 @@ export default function InteractiveMap({
       moved: false,
       electorateNumber: getElectorateNumberFromTarget(event.target),
     };
-
     setIsDragging(false);
   }
 
-  function handleMapPointerMove(event) {
-    const viewportRect = event.currentTarget.getBoundingClientRect();
+  function handlePointerMove(event) {
     const dragState = dragStateRef.current;
+    const hoveredElectorate = getElectorateNumberFromTarget(event.target);
+    const viewportRect = event.currentTarget.getBoundingClientRect();
 
-    setHoveredElectorateNumber(getElectorateNumberFromTarget(event.target));
-    setTooltipPosition({
-      x: event.clientX - viewportRect.left,
-      y: event.clientY - viewportRect.top,
-    });
+    updateTooltipPosition(event.clientX, event.clientY, viewportRect);
+
+    if (hoveredElectorate !== hoveredElectorateNumberRef.current) {
+      hoveredElectorateNumberRef.current = hoveredElectorate;
+      setHoveredElectorateNumber(hoveredElectorate);
+    }
 
     if (!dragState || dragState.pointerId !== event.pointerId) {
       return;
@@ -448,35 +639,20 @@ export default function InteractiveMap({
     }
 
     event.currentTarget.releasePointerCapture(event.pointerId);
+
     if (!dragState.moved && dragState.electorateNumber && onSelectElectorate) {
       onSelectElectorate(dragState.electorateNumber);
     }
+
     dragStateRef.current = null;
     setIsDragging(false);
   }
 
-  function handleMapPointerLeave() {
+  function handlePointerLeave() {
+    dragStateRef.current = null;
+    setIsDragging(false);
+    hoveredElectorateNumberRef.current = null;
     setHoveredElectorateNumber(null);
-  }
-
-  function handlePointerCancel() {
-    dragStateRef.current = null;
-    setIsDragging(false);
-  }
-
-  function handleWheel(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const containerRect = event.currentTarget.getBoundingClientRect();
-    const direction = event.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
-
-    zoomAtPoint(
-      event.clientX,
-      event.clientY,
-      viewRef.current.scale * direction,
-      containerRect,
-    );
   }
 
   function zoomIn() {
@@ -517,10 +693,71 @@ export default function InteractiveMap({
     setIsDragging(false);
   }
 
+  function zoomToCity(cityName) {
+    const viewport = viewportRef.current;
+    const svgRoot = svgRootRef.current;
+
+    if (!viewport || !svgRoot) {
+      return;
+    }
+
+    const targetIds = CITY_PRESETS[cityName] ?? [];
+    const boxes = targetIds
+      .map((id) => svgRoot.querySelector(`#${CSS.escape(id)}`))
+      .filter(Boolean)
+      .map((element) => element.getBBox())
+      .filter((box) => box.width > 0 && box.height > 0);
+
+    if (boxes.length === 0) {
+      return;
+    }
+
+    const bounds = boxes.reduce(
+      (currentBounds, box) => ({
+        minX: Math.min(currentBounds.minX, box.x),
+        minY: Math.min(currentBounds.minY, box.y),
+        maxX: Math.max(currentBounds.maxX, box.x + box.width),
+        maxY: Math.max(currentBounds.maxY, box.y + box.height),
+      }),
+      {
+        minX: Number.POSITIVE_INFINITY,
+        minY: Number.POSITIVE_INFINITY,
+        maxX: Number.NEGATIVE_INFINITY,
+        maxY: Number.NEGATIVE_INFINITY,
+      },
+    );
+
+    const viewportWidth = viewport.clientWidth;
+    const viewportHeight = viewport.clientHeight;
+    const padding = 36;
+    const targetWidth = bounds.maxX - bounds.minX;
+    const targetHeight = bounds.maxY - bounds.minY;
+    const nextScale = clamp(
+      Math.min(
+        (viewportWidth - padding * 2) / targetWidth,
+        (viewportHeight - padding * 2) / targetHeight,
+      ),
+      getMinScale(viewMode),
+      MAX_SCALE,
+    );
+
+    updateView({
+      scale: nextScale,
+      x: (viewportWidth - targetWidth * nextScale) / 2 - bounds.minX * nextScale,
+      y: (viewportHeight - targetHeight * nextScale) / 2 - bounds.minY * nextScale,
+    });
+    dragStateRef.current = null;
+    setIsDragging(false);
+  }
+
   return (
     <div className="map-panel">
       <div className="map-panel__controls">
-        <div className="map-panel__view-toggle" role="tablist" aria-label="Map view">
+        <div
+          className="map-panel__view-toggle"
+          role="tablist"
+          aria-label="Map view"
+        >
           <button
             type="button"
             className={`map-panel__button${viewMode === "cartographic" ? " is-active" : ""}`}
@@ -539,6 +776,27 @@ export default function InteractiveMap({
       </div>
 
       <div className="map-panel__controls">
+        <button
+          type="button"
+          className="map-panel__button"
+          onClick={() => zoomToCity("Auckland")}
+        >
+          Auckland
+        </button>
+        <button
+          type="button"
+          className="map-panel__button"
+          onClick={() => zoomToCity("Christchurch")}
+        >
+          Christchurch
+        </button>
+        <button
+          type="button"
+          className="map-panel__button"
+          onClick={() => zoomToCity("Wellington")}
+        >
+          Wellington
+        </button>
         <button type="button" className="map-panel__button" onClick={zoomIn}>
           +
         </button>
@@ -553,13 +811,12 @@ export default function InteractiveMap({
       <div
         className={`map-panel__viewport${isDragging ? " is-dragging" : ""}`}
         ref={viewportRef}
-        aria-label="New Zealand electorate map"
         onPointerDown={handlePointerDown}
-        onPointerMove={handleMapPointerMove}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-        onPointerLeave={handleMapPointerLeave}
-        onWheel={handleWheel}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        aria-label="Interactive New Zealand electorate map"
       >
         {svgMarkup ? (
           <>
@@ -571,9 +828,10 @@ export default function InteractiveMap({
             {hoveredElectorate && !isDragging && (
               <div
                 className="map-panel__tooltip"
+                ref={tooltipRef}
                 style={{
-                  left: `${tooltipPosition.x}px`,
-                  top: `${tooltipPosition.y}px`,
+                  left: `${tooltipPositionRef.current.x}px`,
+                  top: `${tooltipPositionRef.current.y}px`,
                 }}
               >
                 <p className="map-panel__tooltip-title">

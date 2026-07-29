@@ -35,6 +35,7 @@ export default function useDashboardData() {
     electorateDetails: null,
     electorateWinners: null,
     nzMapMarkup: null,
+    nzHexMapMarkup: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,12 +51,14 @@ export default function useDashboardData() {
         electorateDetails,
         electorateWinners,
         nzMapMarkup,
+        nzHexMapMarkup,
       ] = await Promise.all([
         fetchJson("results.json", signal),
         fetchJson("vote_count.json", signal),
         fetchJson("electorate_details.json", signal),
         fetchJson("electorate_winners.json", signal),
         fetchText("nzmap.svg", signal),
+        fetchText("hexmap.svg", signal),
       ]);
 
       if (!isActive) {
@@ -68,6 +71,7 @@ export default function useDashboardData() {
         electorateDetails,
         electorateWinners,
         nzMapMarkup,
+        nzHexMapMarkup,
       });
       setLastSuccessfulAt(Date.now());
       setError(null);
