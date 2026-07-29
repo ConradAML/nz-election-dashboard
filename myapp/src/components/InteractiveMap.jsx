@@ -7,6 +7,8 @@ import {
 
 const CARTOGRAPHIC_VIEW = "cartographic";
 const HEX_VIEW = "hex";
+const GENERAL_ELECTORATES = "general";
+const MAORI_ELECTORATES = "maori";
 const DEFAULT_MIN_SCALE = 0.45;
 const HEX_MIN_SCALE = 0.28;
 const MAX_SCALE = 8;
@@ -16,6 +18,7 @@ const MIN_VISIBLE_PX = 96;
 const SELECTED_STROKE_COLOR = "#f4f1eb";
 const DEFAULT_SELECTED_STROKE_WIDTH = "2.8px";
 const HEX_SELECTED_STROKE_WIDTH = "8px";
+const MAORI_HEX_SELECTED_STROKE_WIDTH = "24px";
 const SELECTED_FILL_LIGHTEN = 0.22;
 const DEFAULT_FIT_PADDING = 20;
 const HEX_FIT_PADDING = 40;
@@ -46,6 +49,9 @@ function normalizeElectorateKey(value) {
     .replace(/otahuhu/g, "otahuhu")
     .replace(/kaikoura/g, "kaikoura")
     .replace(/waitakere/g, "waitakere")
+    .replace(/wakaurau/g, "makaurau")
+    .replace(/wairiki/g, "waiariki")
+    .replace(/waiariki\d+$/g, "waiariki")
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "");
 }
@@ -96,10 +102,22 @@ function getMinScale(viewMode) {
   return viewMode === HEX_VIEW ? HEX_MIN_SCALE : DEFAULT_MIN_SCALE;
 }
 
-function getSelectedStrokeWidth(viewMode) {
+function getSelectedStrokeWidth(viewMode, electorateGroup) {
+  if (viewMode === HEX_VIEW && electorateGroup === MAORI_ELECTORATES) {
+    return MAORI_HEX_SELECTED_STROKE_WIDTH;
+  }
+
   return viewMode === HEX_VIEW
     ? HEX_SELECTED_STROKE_WIDTH
     : DEFAULT_SELECTED_STROKE_WIDTH;
+}
+
+function getDefaultStrokeColor(viewMode, electorateGroup) {
+  if (viewMode === CARTOGRAPHIC_VIEW && electorateGroup === MAORI_ELECTORATES) {
+    return "#ffffff";
+  }
+
+  return null;
 }
 
 function getFitOptions(viewMode, viewportWidth) {
@@ -206,6 +224,7 @@ function buildStyledSvgMarkup({
   hoveredElectorateNumber,
   selectedElectorateNumber,
   mapKind,
+  electorateGroup,
 }) {
   if (!rawMarkup || !electorateWinners) {
     return "";
@@ -218,7 +237,8 @@ function buildStyledSvgMarkup({
   const byElectorateNumber = electorateWinners.by_electorate_number ?? {};
   const bySvgId = electorateWinners.by_svg_id ?? {};
   const byNormalizedKey = new Map();
-  const selectedStrokeWidth = getSelectedStrokeWidth(mapKind);
+  const selectedStrokeWidth = getSelectedStrokeWidth(mapKind, electorateGroup);
+  const defaultStrokeColor = getDefaultStrokeColor(mapKind, electorateGroup);
   let hoveredLayer = null;
   let selectedLayer = null;
 
@@ -231,12 +251,20 @@ function buildStyledSvgMarkup({
   }
 
   for (const layer of svgElement.querySelectorAll("g[id], path[id]")) {
-    const seededElectorateNumber = layer.getAttribute("data-electorate-no");
+    const parentElectorateLayer =
+      layer.parentElement?.closest("[data-electorate-no]");
+    const seededElectorateNumber =
+      layer.getAttribute("data-electorate-no")
+      ?? parentElectorateLayer?.getAttribute("data-electorate-no");
     const normalizedLayerId = normalizeElectorateKey(layer.id);
+    const normalizedParentLayerId = normalizeElectorateKey(
+      layer.parentElement?.closest("g[id], path[id]")?.id,
+    );
     const mapEntry =
       (seededElectorateNumber && byElectorateNumber[seededElectorateNumber]) ||
       bySvgId[layer.id] ||
-      byNormalizedKey.get(normalizedLayerId);
+      byNormalizedKey.get(normalizedLayerId) ||
+      byNormalizedKey.get(normalizedParentLayerId);
     const electorateNumber =
       mapEntry?.electorate_number ?? seededElectorateNumber ?? null;
     const hasElectorateMatch = Boolean(electorateNumber);
@@ -268,6 +296,13 @@ function buildStyledSvgMarkup({
       let nextStyle = shape.getAttribute("style") || "";
       nextStyle = styleWithRule(nextStyle, `fill: ${fill};`);
       nextStyle = styleWithRule(nextStyle, "pointer-events: auto;");
+
+      if (defaultStrokeColor) {
+        nextStyle = styleWithRule(nextStyle, `stroke: ${defaultStrokeColor};`);
+        nextStyle = styleWithRule(nextStyle, "stroke-linejoin: round;");
+        nextStyle = styleWithRule(nextStyle, "stroke-linecap: round;");
+        shape.setAttribute("stroke", defaultStrokeColor);
+      }
 
       if (isActive) {
         nextStyle = styleWithRule(nextStyle, `stroke: ${SELECTED_STROKE_COLOR};`);
@@ -510,6 +545,7 @@ export default function InteractiveMap({
   electorateDetails,
   cartographicMapMarkup,
   hexMapMarkup,
+  electorateGroup = GENERAL_ELECTORATES,
   selectedElectorateNumber,
   onSelectElectorate,
   viewMode = CARTOGRAPHIC_VIEW,
@@ -553,6 +589,7 @@ export default function InteractiveMap({
         hoveredElectorateNumber,
         selectedElectorateNumber,
         mapKind: CARTOGRAPHIC_VIEW,
+        electorateGroup,
       }),
       [HEX_VIEW]: buildStyledSvgMarkup({
         rawMarkup: resolvedHexMarkup,
@@ -560,10 +597,12 @@ export default function InteractiveMap({
         hoveredElectorateNumber,
         selectedElectorateNumber,
         mapKind: HEX_VIEW,
+        electorateGroup,
       }),
     };
   }, [
     cartographicMapMarkup,
+    electorateGroup,
     electorateWinners,
     hexMapMarkup,
     hoveredElectorateNumber,

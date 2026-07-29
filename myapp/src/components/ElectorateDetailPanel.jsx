@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   NEUTRAL_PARTY_COLOR,
   PARTY_COLORS,
@@ -6,6 +6,10 @@ import {
 
 function formatNumber(value) {
   return new Intl.NumberFormat("en-NZ").format(value ?? 0);
+}
+
+function formatPercent(value) {
+  return `${Number(value ?? 0).toFixed(1)}%`;
 }
 
 function partyColor(partyCode) {
@@ -105,10 +109,6 @@ export default function ElectorateDetailPanel({
 }) {
   const [activeTab, setActiveTab] = useState("electorate");
 
-  useEffect(() => {
-    setActiveTab("electorate");
-  }, [electorate?.electorate_number]);
-
   if (!electorate) {
     return (
       <aside className="electorate-panel">
@@ -123,6 +123,7 @@ export default function ElectorateDetailPanel({
   const totalVotes = isElectorateTab
     ? electorate.total_valid_candidate_votes
     : electorate.total_valid_party_votes;
+  const percentCounted = Number(electorate.percent_voting_places_counted ?? 0);
   const electorateWinnerColor = partyColor(electorate.winner_party_code);
   const electorateWinnerTextColor = textColorForBackground(electorateWinnerColor);
   const leadingCandidate = electorate.candidate_results?.[0] ?? null;
@@ -248,6 +249,20 @@ export default function ElectorateDetailPanel({
       <p className="electorate-panel__summary">
         Total valid votes: {formatNumber(totalVotes)}
       </p>
+      <div
+        className="electorate-panel__counted"
+        aria-label={`${formatPercent(percentCounted)} of voting places counted`}
+      >
+        <div className="electorate-panel__counted-bar">
+          <div
+            className="electorate-panel__counted-fill"
+            style={{ width: `${Math.max(0, Math.min(percentCounted, 100))}%` }}
+          />
+        </div>
+        <p className="electorate-panel__counted-value">
+          {formatPercent(percentCounted)} counted
+        </p>
+      </div>
 
       <div className="electorate-panel__section">
         <h3>{heading}</h3>

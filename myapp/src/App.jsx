@@ -4,8 +4,21 @@ import SemiDonutChart from "./components/SemiDonutChart";
 import VoteCountBar from "./components/VoteCountBar";
 import InteractiveMap from "./components/InteractiveMap";
 import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
+import RegionVoteCarousel from "./components/RegionVoteCarousel";
 import useIsMobile from "./hooks/useIsMobile";
 import useDashboardData from "./hooks/useDashboardData";
+
+const GENERAL_ELECTORATES = "general";
+const MAORI_ELECTORATES = "maori";
+const MAORI_ELECTORATE_NUMBERS = new Set([
+  "66",
+  "67",
+  "68",
+  "69",
+  "70",
+  "71",
+  "72",
+]);
 
 // Parties to be included in the charts
 const PARTY_CONFIG = [
@@ -142,6 +155,241 @@ function formatRefreshTime(timestamp) {
   }).format(timestamp);
 }
 
+function isMaoriElectorateNumber(electorateNumber) {
+  return MAORI_ELECTORATE_NUMBERS.has(String(electorateNumber ?? ""));
+}
+
+function normalizeElectorateName(value) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function parseCsvLine(line) {
+  const values = [];
+  let current = "";
+  let insideQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    const nextCharacter = line[index + 1];
+
+    if (character === '"') {
+      if (insideQuotes && nextCharacter === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+      continue;
+    }
+
+    if (character === "," && !insideQuotes) {
+      values.push(current);
+      current = "";
+      continue;
+    }
+
+    current += character;
+  }
+
+  values.push(current);
+  return values.map((value) => value.trim());
+}
+
+function parseElectorateRegionsCsv(csvText) {
+  if (!csvText) {
+    return new Map();
+  }
+
+  const lines = csvText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const rows = lines.slice(1);
+  const lookup = new Map();
+
+  for (const row of rows) {
+    const [electorateName, regionName] = parseCsvLine(row);
+
+    if (!electorateName || !regionName) {
+      continue;
+    }
+
+    lookup.set(normalizeElectorateName(electorateName), regionName);
+  }
+
+  return lookup;
+}
+
+function createAggregatedPartyVoteGroup(regionName) {
+  return {
+    regionName,
+    totalVotes: 0,
+    totalVotingPlacesCounted: 0,
+    inferredTotalVotingPlaces: 0,
+    trackedVotes: new Map(PARTY_CONFIG.map((party) => [party.code, 0])),
+  };
+}
+
+function accumulateElectorateIntoPartyVoteGroup(group, electorate) {
+  const electorateTotalVotes =
+    toNumber(electorate?.total_valid_party_votes)
+    || (electorate.party_vote_results ?? []).reduce(
+      (sum, party) => sum + toNumber(party?.votes),
+      0,
+    );
+
+  group.totalVotes += electorateTotalVotes;
+
+  const totalVotingPlacesCounted = toNumber(
+    electorate?.total_voting_places_counted,
+  );
+  const percentVotingPlacesCounted = toNumber(
+    electorate?.percent_voting_places_counted,
+  );
+
+  if (totalVotingPlacesCounted > 0) {
+    group.totalVotingPlacesCounted += totalVotingPlacesCounted;
+  }
+
+  if (totalVotingPlacesCounted > 0 && percentVotingPlacesCounted > 0) {
+    group.inferredTotalVotingPlaces +=
+      totalVotingPlacesCounted / (percentVotingPlacesCounted / 100);
+  }
+
+  for (const party of electorate.party_vote_results ?? []) {
+    const partyCode = party?.party_code;
+
+    if (!group.trackedVotes.has(partyCode)) {
+      continue;
+    }
+
+    group.trackedVotes.set(
+      partyCode,
+      group.trackedVotes.get(partyCode) + toNumber(party?.votes),
+    );
+  }
+}
+
+function finalizeAggregatedPartyVoteGroup(group) {
+  const trackedParties = PARTY_CONFIG.map((party) => {
+    const votes = group.trackedVotes.get(party.code) ?? 0;
+    const value = group.totalVotes > 0 ? (votes / group.totalVotes) * 100 : 0;
+
+    return {
+      label: party.label,
+      value: roundToOneDecimal(value),
+      color: party.color,
+    };
+  });
+
+  const trackedVoteTotal = [...group.trackedVotes.values()].reduce(
+    (sum, votes) => sum + votes,
+    0,
+  );
+  const otherVotes = Math.max(group.totalVotes - trackedVoteTotal, 0);
+
+  const parties = sortByValueWithPinnedLast([...trackedParties, {
+    label: OTHER_PARTY.label,
+    value: roundToOneDecimal(
+      group.totalVotes > 0 ? (otherVotes / group.totalVotes) * 100 : 0,
+    ),
+    color: OTHER_PARTY.color,
+  }], "Other");
+
+  const leadingValue = parties[0]?.value ?? 0;
+  const percentCounted = group.inferredTotalVotingPlaces > 0
+    ? (group.totalVotingPlacesCounted / group.inferredTotalVotingPlaces) * 100
+    : 0;
+
+  return {
+    regionName: group.regionName,
+    percentCounted: roundToOneDecimal(percentCounted),
+    parties: parties.map((party) => ({
+      ...party,
+      scaledValue: leadingValue > 0
+        ? (party.value / leadingValue) * 100
+        : 0,
+    })),
+  };
+}
+
+function buildRegionalPartyVoteData(electorateDetails, electorateRegionsCsv) {
+  if (!electorateDetails || !electorateRegionsCsv) {
+    return [];
+  }
+
+  const regionLookup = parseElectorateRegionsCsv(electorateRegionsCsv);
+  const byElectorateNumber = electorateDetails.by_electorate_number ?? {};
+  const regions = new Map();
+  const maoriElectoratesGroup = createAggregatedPartyVoteGroup("Māori electorates");
+
+  for (const [electorateNumber, electorate] of Object.entries(byElectorateNumber)) {
+    if (isMaoriElectorateNumber(electorateNumber)) {
+      accumulateElectorateIntoPartyVoteGroup(maoriElectoratesGroup, electorate);
+      continue;
+    }
+
+    const regionName = regionLookup.get(
+      normalizeElectorateName(electorate?.electorate_name),
+    );
+
+    if (!regionName) {
+      continue;
+    }
+
+    const existingRegion =
+      regions.get(regionName) ?? createAggregatedPartyVoteGroup(regionName);
+
+    accumulateElectorateIntoPartyVoteGroup(existingRegion, electorate);
+
+    regions.set(regionName, existingRegion);
+  }
+
+  const regionCards = [...regions.values()]
+    .map(finalizeAggregatedPartyVoteGroup)
+    .sort((left, right) => left.regionName.localeCompare(right.regionName));
+
+  return maoriElectoratesGroup.totalVotes > 0
+    ? [finalizeAggregatedPartyVoteGroup(maoriElectoratesGroup), ...regionCards]
+    : regionCards;
+}
+
+function filterElectorateDataByGroup(data, electorateGroup) {
+  if (!data) {
+    return null;
+  }
+
+  const isMaoriGroup = electorateGroup === MAORI_ELECTORATES;
+  const filteredByElectorateNumber = Object.fromEntries(
+    Object.entries(data.by_electorate_number ?? {}).filter(([electorateNumber]) =>
+      isMaoriGroup
+        ? isMaoriElectorateNumber(electorateNumber)
+        : !isMaoriElectorateNumber(electorateNumber),
+    ),
+  );
+
+  const filteredBySvgId = Object.fromEntries(
+    Object.entries(data.by_svg_id ?? {}).filter(([, entry]) =>
+      isMaoriGroup
+        ? isMaoriElectorateNumber(entry?.electorate_number)
+        : !isMaoriElectorateNumber(entry?.electorate_number),
+    ),
+  );
+
+  return {
+    ...data,
+    by_electorate_number: filteredByElectorateNumber,
+    by_svg_id: filteredBySvgId,
+  };
+}
+
 //Builds the party vote data for the chart
 function buildPartyVoteData(rows) {
   const lookup = buildResultsLookup(rows);
@@ -224,24 +472,56 @@ export default function App() {
     voteCount,
     electorateDetails,
     electorateWinners,
+    electorateRegionsCsv,
     nzMapMarkup,
     nzHexMapMarkup,
+    maoriMapMarkup,
+    maoriHexMapMarkup,
     isLoading,
     error,
     lastSuccessfulAt,
     refreshIntervalMs,
   } = useDashboardData();
-  const [selectedElectorateNumber, setSelectedElectorateNumber] = useState(null);
+  const [electorateGroup, setElectorateGroup] = useState(GENERAL_ELECTORATES);
+  const [selectedElectorates, setSelectedElectorates] = useState({
+    [GENERAL_ELECTORATES]: null,
+    [MAORI_ELECTORATES]: null,
+  });
   const [partyVoteMode, setPartyVoteMode] = useState("share");
   const [mapViewMode, setMapViewMode] = useState("cartographic");
   const savedMapViewsRef = useRef({
-    cartographic: null,
-    hex: null,
+    [GENERAL_ELECTORATES]: {
+      cartographic: null,
+      hex: null,
+    },
+    [MAORI_ELECTORATES]: {
+      cartographic: null,
+      hex: null,
+    },
   });
-  const electorateLookup = electorateDetails?.by_electorate_number ?? {};
-  const selectedElectorate = electorateLookup[selectedElectorateNumber] ?? null;
+  const filteredElectorateDetails = filterElectorateDataByGroup(
+    electorateDetails,
+    electorateGroup,
+  );
+  const filteredElectorateWinners = filterElectorateDataByGroup(
+    electorateWinners,
+    electorateGroup,
+  );
+  const activeCartographicMapMarkup =
+    electorateGroup === MAORI_ELECTORATES ? maoriMapMarkup : nzMapMarkup;
+  const activeHexMapMarkup =
+    electorateGroup === MAORI_ELECTORATES ? maoriHexMapMarkup : nzHexMapMarkup;
+  const electorateLookup = filteredElectorateDetails?.by_electorate_number ?? {};
+  const selectedElectorateNumber = selectedElectorates[electorateGroup];
+  const selectedElectorate = selectedElectorateNumber
+    ? electorateLookup[selectedElectorateNumber] ?? null
+    : null;
   const partyVoteData = buildPartyVoteData(results ?? []);
   const seatData = buildSeatData(results ?? []);
+  const regionalPartyVoteData = buildRegionalPartyVoteData(
+    electorateDetails,
+    electorateRegionsCsv,
+  );
   const votesCountedData = voteCount
     ? [
         {
@@ -253,26 +533,48 @@ export default function App() {
     : [];
 
   useEffect(() => {
-    if (isMobile || selectedElectorateNumber !== null || !electorateDetails) {
+    if (isMobile || !filteredElectorateDetails) {
       return;
     }
 
-    const fallbackElectorateNumber =
-      Object.keys(electorateLookup)[0] ?? "1";
+    if (selectedElectorateNumber && electorateLookup[selectedElectorateNumber]) {
+      return;
+    }
 
-    setSelectedElectorateNumber(fallbackElectorateNumber);
-  }, [electorateDetails, electorateLookup, isMobile, selectedElectorateNumber]);
+    const fallbackElectorateNumber = Object.keys(electorateLookup)[0] ?? null;
+
+    if (!fallbackElectorateNumber) {
+      return;
+    }
+
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [electorateGroup]: fallbackElectorateNumber,
+    }));
+  }, [
+    electorateGroup,
+    electorateLookup,
+    filteredElectorateDetails,
+    isMobile,
+    selectedElectorateNumber,
+  ]);
 
   function handleSelectElectorate(electorateNumber) {
-    setSelectedElectorateNumber(electorateNumber);
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [electorateGroup]: electorateNumber,
+    }));
   }
 
   function handleCloseMobileElectorate() {
-    setSelectedElectorateNumber(null);
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [electorateGroup]: null,
+    }));
   }
 
   function handleMapViewSnapshot(nextView) {
-    savedMapViewsRef.current[mapViewMode] = nextView;
+    savedMapViewsRef.current[electorateGroup][mapViewMode] = nextView;
   }
 
   function handleMapViewModeChange(nextViewMode) {
@@ -281,6 +583,14 @@ export default function App() {
     }
 
     setMapViewMode(nextViewMode);
+  }
+
+  function handleElectorateGroupChange(nextElectorateGroup) {
+    if (nextElectorateGroup === electorateGroup) {
+      return;
+    }
+
+    setElectorateGroup(nextElectorateGroup);
   }
 
   const liveStatusMessage = error
@@ -356,22 +666,42 @@ export default function App() {
       </section>
 
       <section className="chart-panel chart-panel--full">
+        <div className="chart-header">
+          <h2>Electorates</h2>
+          <div className="chart-toggle" role="tablist" aria-label="Electorate map type">
+            <button
+              type="button"
+              className={`chart-toggle__button${electorateGroup === GENERAL_ELECTORATES ? " is-active" : ""}`}
+              onClick={() => handleElectorateGroupChange(GENERAL_ELECTORATES)}
+            >
+              General Electorates
+            </button>
+            <button
+              type="button"
+              className={`chart-toggle__button${electorateGroup === MAORI_ELECTORATES ? " is-active" : ""}`}
+              onClick={() => handleElectorateGroupChange(MAORI_ELECTORATES)}
+            >
+              Māori Electorates
+            </button>
+          </div>
+        </div>
         <div className="map-explorer">
           {isMobile ? (
             <div className="map-explorer__mobile">
               <InteractiveMap
-                electorateWinners={electorateWinners}
-                electorateDetails={electorateDetails}
-                cartographicMapMarkup={nzMapMarkup}
-                hexMapMarkup={nzHexMapMarkup}
+                electorateWinners={filteredElectorateWinners}
+                electorateDetails={filteredElectorateDetails}
+                cartographicMapMarkup={activeCartographicMapMarkup}
+                hexMapMarkup={activeHexMapMarkup}
+                electorateGroup={electorateGroup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
                 viewMode={mapViewMode}
                 onViewModeChange={handleMapViewModeChange}
-                savedView={savedMapViewsRef.current[mapViewMode]}
+                savedView={savedMapViewsRef.current[electorateGroup][mapViewMode]}
                 onViewSnapshot={handleMapViewSnapshot}
               />
-              {selectedElectorate && electorateDetails && (
+              {selectedElectorate && filteredElectorateDetails && (
                 <div className="map-explorer__mobile-overlay">
                   <ElectorateDetailPanel
                     electorate={selectedElectorate}
@@ -385,21 +715,23 @@ export default function App() {
           ) : (
             <>
               <InteractiveMap
-                electorateWinners={electorateWinners}
-                electorateDetails={electorateDetails}
-                cartographicMapMarkup={nzMapMarkup}
-                hexMapMarkup={nzHexMapMarkup}
+                electorateWinners={filteredElectorateWinners}
+                electorateDetails={filteredElectorateDetails}
+                cartographicMapMarkup={activeCartographicMapMarkup}
+                hexMapMarkup={activeHexMapMarkup}
+                electorateGroup={electorateGroup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
                 viewMode={mapViewMode}
                 onViewModeChange={handleMapViewModeChange}
-                savedView={savedMapViewsRef.current[mapViewMode]}
+                savedView={savedMapViewsRef.current[electorateGroup][mapViewMode]}
                 onViewSnapshot={handleMapViewSnapshot}
               />
               <ElectorateDetailPanel electorate={selectedElectorate} />
             </>
           )}
         </div>
+        <RegionVoteCarousel regions={regionalPartyVoteData} />
       </section>
     </main>
   );

@@ -34,8 +34,11 @@ export default function useDashboardData() {
     voteCount: null,
     electorateDetails: null,
     electorateWinners: null,
+    electorateRegionsCsv: null,
     nzMapMarkup: null,
     nzHexMapMarkup: null,
+    maoriMapMarkup: null,
+    maoriHexMapMarkup: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,15 +53,21 @@ export default function useDashboardData() {
         voteCount,
         electorateDetails,
         electorateWinners,
+        electorateRegionsCsv,
         nzMapMarkup,
         nzHexMapMarkup,
+        maoriMapMarkup,
+        maoriHexMapMarkup,
       ] = await Promise.all([
         fetchJson("results.json", signal),
         fetchJson("vote_count.json", signal),
         fetchJson("electorate_details.json", signal),
         fetchJson("electorate_winners.json", signal),
+        fetchText("general_electorates_2026_regions.csv", signal),
         fetchText("nzmap.svg", signal),
         fetchText("hexmap.svg", signal),
+        fetchText("maorielectorates.svg", signal),
+        fetchText("hexmap-maori.svg", signal),
       ]);
 
       if (!isActive) {
@@ -70,8 +79,11 @@ export default function useDashboardData() {
         voteCount,
         electorateDetails,
         electorateWinners,
+        electorateRegionsCsv,
         nzMapMarkup,
         nzHexMapMarkup,
+        maoriMapMarkup,
+        maoriHexMapMarkup,
       });
       setLastSuccessfulAt(Date.now());
       setError(null);
