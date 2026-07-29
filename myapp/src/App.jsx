@@ -240,8 +240,6 @@ export default function App() {
   });
   const electorateLookup = electorateDetails?.by_electorate_number ?? {};
   const selectedElectorate = electorateLookup[selectedElectorateNumber] ?? null;
-  const activeMapMarkup =
-    mapViewMode === "hex" ? nzHexMapMarkup ?? nzMapMarkup : nzMapMarkup;
   const partyVoteData = buildPartyVoteData(results ?? []);
   const seatData = buildSeatData(results ?? []);
   const votesCountedData = voteCount
@@ -275,6 +273,14 @@ export default function App() {
 
   function handleMapViewSnapshot(nextView) {
     savedMapViewsRef.current[mapViewMode] = nextView;
+  }
+
+  function handleMapViewModeChange(nextViewMode) {
+    if (nextViewMode === mapViewMode) {
+      return;
+    }
+
+    setMapViewMode(nextViewMode);
   }
 
   const liveStatusMessage = error
@@ -356,11 +362,12 @@ export default function App() {
               <InteractiveMap
                 electorateWinners={electorateWinners}
                 electorateDetails={electorateDetails}
-                nzMapMarkup={activeMapMarkup}
+                cartographicMapMarkup={nzMapMarkup}
+                hexMapMarkup={nzHexMapMarkup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
                 viewMode={mapViewMode}
-                onViewModeChange={setMapViewMode}
+                onViewModeChange={handleMapViewModeChange}
                 savedView={savedMapViewsRef.current[mapViewMode]}
                 onViewSnapshot={handleMapViewSnapshot}
               />
@@ -380,11 +387,12 @@ export default function App() {
               <InteractiveMap
                 electorateWinners={electorateWinners}
                 electorateDetails={electorateDetails}
-                nzMapMarkup={activeMapMarkup}
+                cartographicMapMarkup={nzMapMarkup}
+                hexMapMarkup={nzHexMapMarkup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
                 viewMode={mapViewMode}
-                onViewModeChange={setMapViewMode}
+                onViewModeChange={handleMapViewModeChange}
                 savedView={savedMapViewsRef.current[mapViewMode]}
                 onViewSnapshot={handleMapViewSnapshot}
               />
