@@ -18,6 +18,9 @@ const SELECTED_FILL_LIGHTEN = 0.22;
 const DEFAULT_FIT_PADDING = 20;
 const HEX_FIT_PADDING = 40;
 const HEX_FIT_SCALE_MULTIPLIER = 0.5;
+const MOBILE_BREAKPOINT = 640;
+const MOBILE_HEX_FIT_PADDING = 24;
+const MOBILE_HEX_FIT_SCALE_MULTIPLIER = 0.68;
 
 function normalizeElectorateKey(value) {
   return (value ?? "")
@@ -93,6 +96,27 @@ function getSelectedStrokeWidth(viewMode) {
   return viewMode === "hex"
     ? HEX_SELECTED_STROKE_WIDTH
     : DEFAULT_SELECTED_STROKE_WIDTH;
+}
+
+function getFitOptions(viewMode, viewportWidth) {
+  if (viewMode !== "hex") {
+    return {
+      padding: DEFAULT_FIT_PADDING,
+      scaleMultiplier: 1,
+    };
+  }
+
+  if (viewportWidth <= MOBILE_BREAKPOINT) {
+    return {
+      padding: MOBILE_HEX_FIT_PADDING,
+      scaleMultiplier: MOBILE_HEX_FIT_SCALE_MULTIPLIER,
+    };
+  }
+
+  return {
+    padding: HEX_FIT_PADDING,
+    scaleMultiplier: HEX_FIT_SCALE_MULTIPLIER,
+  };
 }
 
 function getPointerGestureState(activePointers, viewportRect) {
@@ -379,12 +403,12 @@ export default function InteractiveMap({
       return;
     }
 
-    const padding = viewMode === "hex" ? HEX_FIT_PADDING : DEFAULT_FIT_PADDING;
+    const { padding, scaleMultiplier } = getFitOptions(viewMode, viewportWidth);
     const fittedScale = clamp(
       Math.min(
         (viewportWidth - padding * 2) / contentWidth,
         (viewportHeight - padding * 2) / contentHeight,
-      ) * (viewMode === "hex" ? HEX_FIT_SCALE_MULTIPLIER : 1),
+      ) * scaleMultiplier,
       getMinScale(viewMode),
       MAX_SCALE,
     );
