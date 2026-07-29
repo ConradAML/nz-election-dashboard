@@ -95,7 +95,7 @@ function getSelectedStrokeWidth(viewMode) {
     : DEFAULT_SELECTED_STROKE_WIDTH;
 }
 
-function getPointerGestureState(activePointers) {
+function getPointerGestureState(activePointers, viewportRect) {
   if (activePointers.size < 2) {
     return null;
   }
@@ -106,8 +106,12 @@ function getPointerGestureState(activePointers) {
 
   return {
     distance: Math.hypot(deltaX, deltaY),
-    midpointX: (firstPointer.clientX + secondPointer.clientX) / 2,
-    midpointY: (firstPointer.clientY + secondPointer.clientY) / 2,
+    midpointClientX: (firstPointer.clientX + secondPointer.clientX) / 2,
+    midpointClientY: (firstPointer.clientY + secondPointer.clientY) / 2,
+    midpointX:
+      (firstPointer.clientX + secondPointer.clientX) / 2 - viewportRect.left,
+    midpointY:
+      (firstPointer.clientY + secondPointer.clientY) / 2 - viewportRect.top,
   };
 }
 
@@ -418,19 +422,25 @@ export default function InteractiveMap({
     }
 
     if (activePointersRef.current.size >= 2) {
-      const gestureState = getPointerGestureState(activePointersRef.current);
+      const viewportRect = event.currentTarget.getBoundingClientRect();
+      const gestureState = getPointerGestureState(
+        activePointersRef.current,
+        viewportRect,
+      );
 
       dragStateRef.current = null;
       setIsDragging(true);
 
       if (gestureState) {
+        const currentView = viewRef.current;
+
         pinchStateRef.current = {
           startDistance: gestureState.distance,
-          startMidpointX: gestureState.midpointX,
-          startMidpointY: gestureState.midpointY,
+          anchorContentX:
+            (gestureState.midpointX - currentView.x) / currentView.scale,
+          anchorContentY:
+            (gestureState.midpointY - currentView.y) / currentView.scale,
           startScale: viewRef.current.scale,
-          startX: viewRef.current.x,
-          startY: viewRef.current.y,
         };
       }
 
@@ -468,7 +478,10 @@ export default function InteractiveMap({
     }
 
     if (activePointersRef.current.size >= 2 && pinchStateRef.current) {
-      const gestureState = getPointerGestureState(activePointersRef.current);
+      const gestureState = getPointerGestureState(
+        activePointersRef.current,
+        viewportRect,
+      );
       const pinchState = pinchStateRef.current;
 
       if (!gestureState || pinchState.startDistance <= 0) {
@@ -478,16 +491,12 @@ export default function InteractiveMap({
       const nextScale =
         pinchState.startScale * (gestureState.distance / pinchState.startDistance);
       const boundedScale = clamp(nextScale, getMinScale(viewMode), MAX_SCALE);
-      const contentX =
-        (pinchState.startMidpointX - pinchState.startX) / pinchState.startScale;
-      const contentY =
-        (pinchState.startMidpointY - pinchState.startY) / pinchState.startScale;
 
       setIsDragging(true);
       updateView({
         scale: boundedScale,
-        x: gestureState.midpointX - contentX * boundedScale,
-        y: gestureState.midpointY - contentY * boundedScale,
+        x: gestureState.midpointX - pinchState.anchorContentX * boundedScale,
+        y: gestureState.midpointY - pinchState.anchorContentY * boundedScale,
       });
       return;
     }
