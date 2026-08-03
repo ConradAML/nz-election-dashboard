@@ -4,6 +4,7 @@ import {
   NEUTRAL_PARTY_COLOR,
   PARTY_COLORS,
 } from "../constants/partyColors";
+import { formatPartyDisplayLabel } from "../utils/partyDisplay";
 
 const CARTOGRAPHIC_VIEW = "cartographic";
 const HEX_VIEW = "hex";
@@ -39,7 +40,7 @@ function normalizeElectorateKey(value) {
     .replace(/^mt_/g, "mt_")
     .replace(/^st_/g, "st_")
     .replace(/papkura/g, "papakura")
-    .replace(/invercargil/g, "invercargill")
+    .replace(/invercargil(?!l)/g, "invercargill")
     .replace(/whangarei/g, "whangarei")
     .replace(/whangaparaoa/g, "whangaparaoa")
     .replace(/rangitikei/g, "rangitikei")
@@ -261,10 +262,10 @@ function buildStyledSvgMarkup({
       layer.parentElement?.closest("g[id], path[id]")?.id,
     );
     const mapEntry =
-      (seededElectorateNumber && byElectorateNumber[seededElectorateNumber]) ||
       bySvgId[layer.id] ||
       byNormalizedKey.get(normalizedLayerId) ||
-      byNormalizedKey.get(normalizedParentLayerId);
+      byNormalizedKey.get(normalizedParentLayerId) ||
+      (seededElectorateNumber && byElectorateNumber[seededElectorateNumber]);
     const electorateNumber =
       mapEntry?.electorate_number ?? seededElectorateNumber ?? null;
     const hasElectorateMatch = Boolean(electorateNumber);
@@ -814,10 +815,13 @@ export default function InteractiveMap({
     PARTY_COLORS[hoveredLeader?.party_code] ??
     PARTY_COLORS[hoveredElectorate?.winner_party_code] ??
     NEUTRAL_PARTY_COLOR;
-  const hoveredLeaderPartyName = hoveredLeader?.party_short_name
-    || hoveredElectorate?.winner_party_short_name
-    || hoveredElectorate?.winner_party_name
-    || "Independent";
+  const hoveredLeaderPartyName = formatPartyDisplayLabel(
+    hoveredLeader?.party_short_name
+      || hoveredElectorate?.winner_party_short_name,
+    hoveredLeader?.party_name
+      || hoveredElectorate?.winner_party_name
+      || "Independent",
+  );
 
   function scheduleTransform() {
     const canvas = canvasRef.current;

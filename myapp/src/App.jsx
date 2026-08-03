@@ -5,8 +5,14 @@ import VoteCountBar from "./components/VoteCountBar";
 import InteractiveMap from "./components/InteractiveMap";
 import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
 import RegionVoteCarousel from "./components/RegionVoteCarousel";
+import HorizontalPartyVoteChart from "./components/HorizontalPartyVoteChart";
 import useIsMobile from "./hooks/useIsMobile";
 import useDashboardData from "./hooks/useDashboardData";
+import { PARTY_COLORS } from "./constants/partyColors";
+import {
+  formatMainChartPartyLabel,
+  formatPartyDisplayLabel,
+} from "./utils/partyDisplay";
 
 const GENERAL_ELECTORATES = "general";
 const MAORI_ELECTORATES = "maori";
@@ -19,6 +25,32 @@ const MAORI_ELECTORATE_NUMBERS = new Set([
   "71",
   "72",
 ]);
+const REGION_POPULATION_ORDER = [
+  "Māori electorates",
+  "Auckland Region",
+  "Canterbury Region",
+  "Wellington Region",
+  "Waikato Region",
+  "Bay of Plenty Region",
+  "Manawatū-Whanganui Region",
+  "Otago Region",
+  "Northland Region",
+  "Hawke's Bay Region",
+  "Taranaki Region",
+  "Southland Region",
+  "West Coast/Tasman Region",
+  "Nelson Region",
+  "Gisborne Region",
+  "Marlborough Region",
+];
+
+function formatRegionCardName(regionName) {
+  if (regionName === "Tasman Region") {
+    return "West Coast/Tasman Region";
+  }
+
+  return regionName;
+}
 
 // Parties to be included in the charts
 const PARTY_CONFIG = [
@@ -27,49 +59,49 @@ const PARTY_CONFIG = [
     code: "16",
     previousVote: 25.6,
     previousSeats: 33,
-    color: "#3399FF",
+    color: PARTY_COLORS["16"],
   },
   {
     label: "Labour",
     code: "13",
     previousVote: 50.0,
     previousSeats: 65,
-    color: "#FF0000",
+    color: PARTY_COLORS["13"],
   },
   {
     label: "Green",
     code: "10",
     previousVote: 7.9,
     previousSeats: 10,
-    color: "#009900",
+    color: PARTY_COLORS["10"],
   },
   {
     label: "ACT",
     code: "5",
     previousVote: 7.6,
     previousSeats: 10,
-    color: "#D3B641",
+    color: PARTY_COLORS["5"],
   },
   {
     label: "NZ First",
     code: "17",
     previousVote: 2.6,
     previousSeats: 0,
-    color: "#999999",
+    color: PARTY_COLORS["17"],
   },
   {
     label: "Māori",
     code: "14",
     previousVote: 1.2,
     previousSeats: 2,
-    color: "#AA00D4",
+    color: PARTY_COLORS["14"],
   },
   {
     label: "Opportunity",
     code: "24",
     previousVote: 1.5,
     previousSeats: 0,
-    color: "#F0E68C",
+    color: PARTY_COLORS["24"],
   },
 ];
 
@@ -119,28 +151,17 @@ function roundToOneDecimal(value) {
   return Number(value.toFixed(1));
 }
 
+function formatNumber(value) {
+  return new Intl.NumberFormat("en-NZ").format(value ?? 0);
+}
+
 //Builds a lookup map of results by party code
 function buildResultsLookup(rows) {
   return new Map(rows.map((row) => [row.p_no, row]));
 }
 
-function formatPartyDisplayLabel(shortName, fullName) {
-  const sourceLabel = shortName || fullName || "Independent";
-
-  if (sourceLabel === "The Opportunities Party") {
-    return "Opportunity";
-  }
-
-  return sourceLabel
-    .replace(/\s+Party$/i, "")
-    .replace(/\s+Movement$/i, "")
-    .trim();
-}
-
 function fallbackSeatColor(partyCode) {
-  const seed = Number.parseInt(partyCode ?? 0, 10) || 0;
-  const hue = (seed * 47) % 360;
-  return `hsl(${hue} 38% 48%)`;
+  return "#c2a27c";
 }
 
 function formatRefreshTime(timestamp) {
@@ -309,7 +330,7 @@ function finalizeAggregatedPartyVoteGroup(group) {
     : 0;
 
   return {
-    regionName: group.regionName,
+    regionName: formatRegionCardName(group.regionName),
     percentCounted: roundToOneDecimal(percentCounted),
     parties: parties.map((party) => ({
       ...party,
@@ -354,7 +375,24 @@ function buildRegionalPartyVoteData(electorateDetails, electorateRegionsCsv) {
 
   const regionCards = [...regions.values()]
     .map(finalizeAggregatedPartyVoteGroup)
-    .sort((left, right) => left.regionName.localeCompare(right.regionName));
+    .sort((left, right) => {
+      const leftIndex = REGION_POPULATION_ORDER.indexOf(left.regionName);
+      const rightIndex = REGION_POPULATION_ORDER.indexOf(right.regionName);
+
+      if (leftIndex !== -1 || rightIndex !== -1) {
+        if (leftIndex === -1) {
+          return 1;
+        }
+
+        if (rightIndex === -1) {
+          return -1;
+        }
+
+        return leftIndex - rightIndex;
+      }
+
+      return left.regionName.localeCompare(right.regionName);
+    });
 
   return maoriElectoratesGroup.totalVotes > 0
     ? [finalizeAggregatedPartyVoteGroup(maoriElectoratesGroup), ...regionCards]
@@ -393,6 +431,7 @@ function filterElectorateDataByGroup(data, electorateGroup) {
 //Builds the party vote data for the chart
 function buildPartyVoteData(rows) {
   const lookup = buildResultsLookup(rows);
+  const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
 
   //This gets the vote share and names of the parties we want to track
   const trackedParties = PARTY_CONFIG.map((party) => {
@@ -407,10 +446,30 @@ function buildPartyVoteData(rows) {
     };
   });
 
+  const seatWinningExtraParties = rows
+    .filter((row) => !trackedPartyCodes.has(row.p_no))
+    .map((row) => {
+      const value = toNumber(row.percent_votes);
+
+      return {
+        label: formatMainChartPartyLabel(row.short_name, row.party_name),
+        partyCode: row.p_no,
+        value,
+        change: roundToOneDecimal(value),
+        color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
+        totalSeats: toSeatNumber(row.total_seats),
+      };
+    })
+    .filter((party) => party.totalSeats > 0)
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+
   //This calculates the vote share for Others
   const totalVoteShare = rows.reduce((sum, row) => sum + toNumber(row.percent_votes), 0);
-  const trackedVoteShare = trackedParties.reduce((sum, party) => sum + party.value, 0);
-  const otherVoteShare = Math.max(totalVoteShare - trackedVoteShare, 0);
+  const includedVoteShare = [...trackedParties, ...seatWinningExtraParties].reduce(
+    (sum, party) => sum + party.value,
+    0,
+  );
+  const otherVoteShare = Math.max(totalVoteShare - includedVoteShare, 0);
 
   const otherParty = {
     label: OTHER_PARTY.label,
@@ -419,7 +478,37 @@ function buildPartyVoteData(rows) {
     color: OTHER_PARTY.color,
   };
 
-  return sortByValueWithPinnedLast([...trackedParties, otherParty], "Other");
+  return sortByValueWithPinnedLast(
+    [...trackedParties, ...seatWinningExtraParties, otherParty],
+    "Other",
+  );
+}
+
+function buildAllPartyVoteData(rows) {
+  const previousVoteLookup = new Map(
+    PARTY_CONFIG.map((party) => [party.code, party.previousVote]),
+  );
+  const trackedLabelLookup = new Map(
+    PARTY_CONFIG.map((party) => [party.code, party.label]),
+  );
+
+  return [...rows]
+    .map((row) => {
+      const value = toNumber(row.percent_votes);
+      const previousVote = previousVoteLookup.get(row.p_no) ?? 0;
+
+      return {
+        label:
+          trackedLabelLookup.get(row.p_no)
+          ?? formatPartyDisplayLabel(row.short_name, row.party_name),
+        partyCode: row.p_no,
+        votes: toSeatNumber(row.votes),
+        value,
+        change: roundToOneDecimal(value - previousVote),
+        color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
+      };
+    })
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
 }
 
 //Builds the seat count data for the chart
@@ -450,7 +539,7 @@ function buildSeatData(rows) {
       label: formatPartyDisplayLabel(row.short_name, row.party_name),
       value: toSeatNumber(row.total_seats),
       change: toSeatNumber(row.total_seats),
-      color: fallbackSeatColor(row.p_no),
+      color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
     }))
     .filter((party) => party.value > 0)
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
@@ -488,6 +577,7 @@ export default function App() {
     [MAORI_ELECTORATES]: null,
   });
   const [partyVoteMode, setPartyVoteMode] = useState("share");
+  const [showAllParties, setShowAllParties] = useState(false);
   const [mapViewMode, setMapViewMode] = useState("cartographic");
   const savedMapViewsRef = useRef({
     [GENERAL_ELECTORATES]: {
@@ -517,13 +607,15 @@ export default function App() {
     ? electorateLookup[selectedElectorateNumber] ?? null
     : null;
   const partyVoteData = buildPartyVoteData(results ?? []);
+  const allPartyVoteData = buildAllPartyVoteData(results ?? []);
   const seatData = buildSeatData(results ?? []);
   const regionalPartyVoteData = buildRegionalPartyVoteData(
     electorateDetails,
     electorateRegionsCsv,
   );
+  const totalVotesCounted = toSeatNumber(voteCount?.total_votes_cast);
   const votesCountedData = voteCount
-    ? [
+      ? [
         {
           label: voteCount.label,
           value: toNumber(voteCount.value),
@@ -621,7 +713,14 @@ export default function App() {
       </section>
 
       <section className="chart-panel chart-panel--full">
-        <h2>Votes counted</h2>
+        <div className="chart-header">
+          <h2>Votes counted</h2>
+          {totalVotesCounted > 0 && (
+            <p className="chart-header__meta">
+              {formatNumber(totalVotesCounted)} votes
+            </p>
+          )}
+        </div>
         {votesCountedData.length > 0 && (
           <VoteCountBar
             data={votesCountedData}
@@ -651,12 +750,40 @@ export default function App() {
             </button>
           </div>
         </div>
-        {partyVoteData.length > 0 && (
-          <VerticalBarChart
-            data={partyVoteData}
-            height={560}
-            mode={partyVoteMode}
-          />
+        {showAllParties ? (
+          <>
+            {allPartyVoteData.length > 0 && (
+              <HorizontalPartyVoteChart
+                data={allPartyVoteData}
+                mode={partyVoteMode}
+                maxHeight={560}
+              />
+            )}
+            <button
+              type="button"
+              className="chart-expand-button"
+              onClick={() => setShowAllParties(false)}
+            >
+              Show main parties
+            </button>
+          </>
+        ) : (
+          <>
+            {partyVoteData.length > 0 && (
+              <VerticalBarChart
+                data={partyVoteData}
+                height={560}
+                mode={partyVoteMode}
+              />
+            )}
+            <button
+              type="button"
+              className="chart-expand-button"
+              onClick={() => setShowAllParties(true)}
+            >
+              Show all parties
+            </button>
+          </>
         )}
       </section>
 

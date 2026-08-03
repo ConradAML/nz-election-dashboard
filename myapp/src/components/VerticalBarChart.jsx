@@ -79,9 +79,15 @@ export default function VerticalBarChart({
     { length: (changeScaleMax / 5) * 2 + 1 },
     (_, index) => index * 5 - changeScaleMax,
   ).filter((value) => value !== 0);
+  const shouldRotateCategoryLabels = isMobile || data.length > 8;
   const barGap = 18;
   const barWidth = (chartWidth - barGap * (data.length - 1)) / data.length;
   const changeZeroY = labelReserve + changePlotHeight / 2;
+  const categoryLabelY = chartHeight + 28;
+  const categoryLabelBottomPadding = shouldRotateCategoryLabels
+    ? (isMobile ? 108 : 76)
+    : (isMobile ? 56 : 24);
+  const svgHeight = margin.top + categoryLabelY + categoryLabelBottomPadding;
 
   useEffect(() => {
     if (previousModeRef.current === mode) {
@@ -171,7 +177,7 @@ export default function VerticalBarChart({
     <>
       <svg
         width="100%"
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`0 0 ${width} ${svgHeight}`}
         role="img"
         aria-label={mode === "change" ? "Party vote change in percentage points" : "Party vote percentages"}
       >
@@ -328,11 +334,11 @@ export default function VerticalBarChart({
 
                 <text
                   x={x + barWidth / 2}
-                  y={chartHeight + 28}
-                  textAnchor={isMobile ? "start" : "middle"}
+                  y={categoryLabelY}
+                  textAnchor={shouldRotateCategoryLabels ? "start" : "middle"}
                   transform={
-                    isMobile
-                      ? `rotate(45 ${x + barWidth / 2} ${chartHeight + 28})`
+                    shouldRotateCategoryLabels
+                      ? `rotate(45 ${x + barWidth / 2} ${categoryLabelY})`
                       : undefined
                   }
                   fontSize={isMobile ? "16" : "20"}

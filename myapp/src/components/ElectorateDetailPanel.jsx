@@ -3,6 +3,7 @@ import {
   NEUTRAL_PARTY_COLOR,
   PARTY_COLORS,
 } from "../constants/partyColors";
+import { formatPartyDisplayLabel } from "../utils/partyDisplay";
 
 function formatNumber(value) {
   return new Intl.NumberFormat("en-NZ").format(value ?? 0);
@@ -52,16 +53,7 @@ function lightenColor(hexColor, amount = 0.78) {
 }
 
 function formatPartyLabel(shortName, fullName) {
-  const sourceLabel = shortName || fullName || "Leading";
-
-  if (sourceLabel === "The Opportunities Party") {
-    return "Opportunity";
-  }
-
-  return sourceLabel
-    .replace(/\s+Party$/i, "")
-    .replace(/\s+Movement$/i, "")
-    .trim();
+  return formatPartyDisplayLabel(shortName, fullName || "Leading");
 }
 
 function VoteRows({ rows, getKey, getLabel, getPartyLabel }) {
@@ -271,13 +263,13 @@ export default function ElectorateDetailPanel({
             rows={electorate.candidate_results}
             getKey={(row) => row.candidate_number}
             getLabel={(row) => row.candidate_name}
-            getPartyLabel={(row) => row.party_short_name || row.party_name}
+            getPartyLabel={(row) => formatPartyLabel(row.party_short_name, row.party_name)}
           />
         ) : (
           <VoteRows
             rows={electorate.party_vote_results}
             getKey={(row) => row.party_code}
-            getLabel={(row) => row.party_short_name || row.party_name}
+            getLabel={(row) => formatPartyLabel(row.party_short_name, row.party_name)}
             getPartyLabel={() => ""}
           />
         )}

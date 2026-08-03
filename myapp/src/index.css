@@ -108,6 +108,12 @@ code {
   margin-bottom: 0;
 }
 
+.chart-header__meta {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
 .chart-toggle {
   display: inline-flex;
   align-items: center;
@@ -131,6 +137,110 @@ code {
   background: var(--text-h);
   color: var(--bg);
   border-color: var(--text-h);
+}
+
+.chart-expand-button {
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.horizontal-party-chart {
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.horizontal-party-chart__row {
+  margin-bottom: 14px;
+}
+
+.horizontal-party-chart__row:last-child {
+  margin-bottom: 0;
+}
+
+.horizontal-party-chart__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.horizontal-party-chart__label-block {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.horizontal-party-chart__label,
+.horizontal-party-chart__value,
+.horizontal-party-chart__votes {
+  color: var(--text-h);
+  line-height: 1.2;
+}
+
+.horizontal-party-chart__label {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.horizontal-party-chart__votes {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.horizontal-party-chart__value {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.horizontal-party-chart__bar {
+  position: relative;
+  height: 16px;
+  cursor: pointer;
+}
+
+.horizontal-party-chart__track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(8, 6, 13, 0.08);
+}
+
+.horizontal-party-chart__bar.is-change .horizontal-party-chart__track {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(198, 40, 40, 0.08) 0%,
+      rgba(198, 40, 40, 0.08) 50%,
+      rgba(21, 128, 61, 0.08) 50%,
+      rgba(21, 128, 61, 0.08) 100%
+    );
+}
+
+.horizontal-party-chart__zero-line {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 50%;
+  width: 1px;
+  background: rgba(8, 6, 13, 0.2);
+}
+
+.horizontal-party-chart__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
 }
 
 .dashboard-live-status {
@@ -760,6 +870,10 @@ code {
   .chart-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .chart-header__meta {
+    font-size: 15px;
   }
 
   .map-panel,
