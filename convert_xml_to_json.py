@@ -1,4 +1,6 @@
+import csv
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import unicodedata
@@ -9,22 +11,55 @@ from difflib import SequenceMatcher
 
 BASE_DIR = Path(__file__).resolve().parent
 ROOT_DIR = BASE_DIR / "XMLfiles"
+PUBLIC_DIR = BASE_DIR / "myapp" / "public"
 
 candidate_path = ROOT_DIR / "candidates.xml"
 parties_path = ROOT_DIR / "parties.xml"
 electorates_path = ROOT_DIR / "electorates.xml"
 results_path = ROOT_DIR / "election.xml"
 map_svg_path = BASE_DIR / "nzmap.svg"
-results_output_path = BASE_DIR / "results.json"
-vote_count_output_path = BASE_DIR / "vote_count.json"
-electorate_map_output_path = BASE_DIR / "electorate_winners.json"
-electorate_details_output_path = BASE_DIR / "electorate_details.json"
-
+results_output_paths = [
+    BASE_DIR / "results.json",
+    PUBLIC_DIR / "results.json",
+]
+vote_count_output_paths = [
+    BASE_DIR / "vote_count.json",
+    PUBLIC_DIR / "vote_count.json",
+]
+electorate_map_output_paths = [
+    BASE_DIR / "electorate_winners.json",
+    PUBLIC_DIR / "electorate_winners.json",
+]
+electorate_details_output_paths = [
+    BASE_DIR / "electorate_details.json",
+    PUBLIC_DIR / "electorate_details.json",
+]
+electorate_notionals_path = BASE_DIR / "electorate_full_notionals.csv"
+party_vote_notionals_path = BASE_DIR / "partyvote_notionals_full.csv"
+party_vote_snapshot_paths = [
+    BASE_DIR / "party_vote_snapshots.json",
+    PUBLIC_DIR / "party_vote_snapshots.json",
+]
+SNAPSHOT_PARTY_CODES = {"5", "10", "13", "14", "16", "17", "24"}
 SVG_NAME_ALIASES = {
     "East_Cape": "East_Coast",
     "Kapiti": "Otaki",
-    "Mt_Maunganui": "Tauranga",
-    "Wellington_Bays": "Wellington_Central",
+    "Invercargil": "Invercargill",
+}
+
+DISPLAY_NAME_ALIASES = {
+    "East Coast": "East Cape",
+    "Ōtaki": "Kapiti",
+    "Otaki": "Kapiti",
+    "Rongotai": "Wellington Bays",
+    "Wellington Central": "Wellington North",
+    "Ōhāriu": "Kenepuru",
+    "Ohariu": "Kenepuru",
+    "Bay of Plenty": "Mt Maunganui",
+    "New Lynn": "Waitākere",
+    "Te Atatū": "Henderson",
+    "Kelston": "Glendene",
+    "Panmure-Ōtāhuhu": "Ōtāhuhu",
 }
 
 
@@ -72,6 +107,170 @@ def build_results_with_party_names(results, party_lookup):
     return enriched_results
 
 
+def atomic_write_json(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_suffix(f"{path.suffix}.tmp")
+
+    with temporary_path.open("w", encoding="utf-8") as handle:
+        json.dump(data, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+
+    temporary_path.replace(path)
+
+
+def load_notional_shares(path):
+    shares_by_electorate = {}
+
+    with path.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            electorate_id = normalize_svg_id(row.get("electorate_name", ""))
+            total_votes_value = next(
+                (
+                    value
+                    for column_name, value in row.items()
+                    if column_name and column_name.startswith("Total_valid_")
+                ),
+                0,
+            )
+            shares_by_electorate[electorate_id] = {
+                "total_votes": float(total_votes_value or 0),
+                "shares": {
+                    normalize_notional_label(column_name.removesuffix("_share")): float(value)
+                    * 100
+                    for column_name, value in row.items()
+                    if column_name and column_name.endswith("_share") and value
+                },
+                "votes": {
+                    normalize_notional_label(column_name.removesuffix("_votes")): float(value)
+                    for column_name, value in row.items()
+                    if column_name and column_name.endswith("_votes") and value
+                },
+            }
+
+    return shares_by_electorate
+
+
+def normalize_notional_label(label):
+    ascii_label = "".join(
+        character
+        for character in unicodedata.normalize("NFKD", label)
+        if not unicodedata.combining(character)
+    )
+    return re.sub(r"[^a-z0-9]+", "", ascii_label.lower())
+
+
+def find_notional_share(shares, party_meta, candidate_name=None, independent=False):
+    if independent and candidate_name:
+        candidate_key = normalize_notional_label(f"INDEPENDENT — {candidate_name}")
+        return shares.get(candidate_key)
+
+    party_labels = (
+        party_meta.get("short_name", ""),
+        party_meta.get("party_name", ""),
+        party_meta.get("abbrev", ""),
+    )
+    for label in party_labels:
+        share = shares.get(normalize_notional_label(label))
+        if share is not None:
+            return share
+
+    return None
+
+
+def build_party_vote_snapshot(results, vote_count_data):
+    parties = {
+        result["p_no"]: {
+            "votes": int(result.get("votes") or 0),
+            "voteShare": float(result.get("percent_votes") or 0),
+        }
+        for result in sorted(results, key=lambda result: int(result["p_no"]))
+        if result["p_no"] in SNAPSHOT_PARTY_CODES
+    }
+    other_results = [
+        result for result in results if result["p_no"] not in SNAPSHOT_PARTY_CODES
+    ]
+    parties["other"] = {
+        "votes": sum(int(result.get("votes") or 0) for result in other_results),
+        "voteShare": round(
+            sum(float(result.get("percent_votes") or 0) for result in other_results),
+            2,
+        ),
+    }
+    projected_seats = {
+        result["p_no"]: int(result.get("total_seats") or 0)
+        for result in results
+        if result["p_no"] in SNAPSHOT_PARTY_CODES
+    }
+    projected_seats["other"] = sum(
+        int(result.get("total_seats") or 0) for result in other_results
+    )
+
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "percentCounted": float(vote_count_data["percent_voting_places_counted"] or 0),
+        "totalVotingPlacesCounted": int(vote_count_data["total_voting_places_counted"] or 0),
+        "totalVotesCast": int(vote_count_data["total_votes_cast"] or 0),
+        "turnout": float(vote_count_data["percent_votes_cast"] or 0),
+        "parties": parties,
+        "projectedSeats": projected_seats,
+    }
+
+
+def report_vote_count_difference(latest_snapshot, next_snapshot):
+    if latest_snapshot is None:
+        print(
+            "Updated votes: creating the first snapshot with "
+            f"{next_snapshot['totalVotesCast']:,} votes counted."
+        )
+        return True
+
+    previous_total = int(latest_snapshot.get("totalVotesCast") or 0)
+    next_total = int(next_snapshot.get("totalVotesCast") or 0)
+
+    if previous_total == next_total:
+        print(
+            "No updated votes: the overall number of votes counted is unchanged "
+            f"at {next_total:,}."
+        )
+        return False
+
+    vote_difference = next_total - previous_total
+    print(
+        "Updated votes: the overall number of votes counted changed from "
+        f"{previous_total:,} to {next_total:,} ({vote_difference:+,})."
+    )
+    return True
+
+
+def update_party_vote_snapshots(results, vote_count_data):
+    source_path = next(
+        (path for path in party_vote_snapshot_paths if path.exists()),
+        None,
+    )
+
+    if source_path:
+        with source_path.open(encoding="utf-8") as handle:
+            history = json.load(handle)
+    else:
+        history = {"version": 1, "election": "2026", "snapshots": []}
+
+    if not isinstance(history.get("snapshots"), list):
+        raise ValueError("party_vote_snapshots.json must contain a snapshots array")
+
+    next_snapshot = build_party_vote_snapshot(results, vote_count_data)
+    latest_snapshot = history["snapshots"][-1] if history["snapshots"] else None
+
+    if not report_vote_count_difference(latest_snapshot, next_snapshot):
+        return False
+
+    history["snapshots"].append(next_snapshot)
+
+    for output_path in party_vote_snapshot_paths:
+        atomic_write_json(output_path, history)
+
+    return True
+
+
 def read_election_statistics(path):
     tree = ET.parse(path)
     root = tree.getroot()
@@ -97,7 +296,10 @@ def parse_candidates(path):
 def parse_electorates(path):
     root = ET.parse(path).getroot()
     return {
-        electorate.attrib["e_no"]: (electorate.findtext("electorate_name") or "").strip()
+        electorate.attrib["e_no"]: DISPLAY_NAME_ALIASES.get(
+            (electorate.findtext("electorate_name") or "").strip(),
+            (electorate.findtext("electorate_name") or "").strip(),
+        )
         for electorate in root.findall("electorate")
     }
 
@@ -266,13 +468,21 @@ def build_electorate_details():
     parties = convert_to_dict(parties_path)
     party_lookup = build_party_lookup(parties)
     svg_layer_ids = load_svg_layer_ids(map_svg_path)
+    electorate_notional_shares = load_notional_shares(electorate_notionals_path)
+    party_vote_notional_shares = load_notional_shares(party_vote_notionals_path)
     details_by_electorate_number = {}
 
     for electorate_xml in load_electorate_xmls(ROOT_DIR):
         root = ET.parse(electorate_xml).getroot()
+        statistics = root.find("statistics")
         electorate_number = root.attrib["e_no"]
         electorate_name = electorate_names.get(electorate_number, "")
         normalized_name = normalize_svg_id(electorate_name)
+        electorate_previous = electorate_notional_shares.get(normalized_name, {})
+        party_vote_previous = party_vote_notional_shares.get(normalized_name, {})
+        electorate_previous_shares = electorate_previous.get("shares", {})
+        party_vote_previous_shares = party_vote_previous.get("shares", {})
+        party_vote_previous_votes = party_vote_previous.get("votes", {})
         svg_id, match_method = pick_svg_match(
             normalized_name,
             svg_layer_ids,
@@ -344,6 +554,20 @@ def build_electorate_details():
                     (candidate["votes"] / total_valid_candidate_votes) * 100,
                     2,
                 )
+            previous_share = find_notional_share(
+                electorate_previous_shares,
+                party_lookup.get(candidate["party_code"], {}),
+                candidate_name=candidate["candidate_name"],
+                independent=candidate["party_code"] == "0",
+            )
+            candidate["previous_vote_share"] = (
+                round(previous_share, 2) if previous_share is not None else None
+            )
+            candidate["change"] = (
+                round(candidate["vote_share"] - previous_share, 2)
+                if previous_share is not None
+                else None
+            )
 
         for party_result in party_vote_results:
             if total_valid_party_votes == 0:
@@ -353,6 +577,25 @@ def build_electorate_details():
                     (party_result["votes"] / total_valid_party_votes) * 100,
                     2,
                 )
+            previous_share = find_notional_share(
+                party_vote_previous_shares,
+                party_lookup.get(party_result["party_code"], {}),
+            )
+            previous_votes = find_notional_share(
+                party_vote_previous_votes,
+                party_lookup.get(party_result["party_code"], {}),
+            )
+            party_result["previous_votes"] = (
+                round(previous_votes, 4) if previous_votes is not None else None
+            )
+            party_result["previous_vote_share"] = (
+                round(previous_share, 2) if previous_share is not None else None
+            )
+            party_result["change"] = (
+                round(party_result["vote_share"] - previous_share, 2)
+                if previous_share is not None
+                else None
+            )
 
         if party_vote_counts:
             winner_party_code, winner_party_votes = max(
@@ -389,8 +632,24 @@ def build_electorate_details():
             "leading_party_vote_short_name": leading_party_vote_meta.get("short_name", ""),
             "leading_party_vote_name": leading_party_vote_meta.get("party_name", ""),
             "leading_party_vote_total": leading_party_vote_total,
+            "total_voting_places_counted": int(
+                (statistics.findtext("total_voting_places_counted") or "0").strip()
+            ),
+            "percent_voting_places_counted": float(
+                (statistics.findtext("percent_voting_places_counted") or "0").strip()
+            ),
+            "total_votes_cast": int(
+                (statistics.findtext("total_votes_cast") or "0").strip()
+            ),
+            "percent_votes_cast": float(
+                (statistics.findtext("percent_votes_cast") or "0").strip()
+            ),
             "total_valid_candidate_votes": total_valid_candidate_votes,
             "total_valid_party_votes": total_valid_party_votes,
+            "previous_total_valid_party_votes": round(
+                party_vote_previous.get("total_votes", 0),
+                4,
+            ),
             "candidate_results": candidate_results,
             "party_vote_results": party_vote_results,
         }
@@ -419,17 +678,24 @@ def main():
         "percent_votes_cast": statistics.get("percent_votes_cast", "0"),
     }
 
-    with results_output_path.open("w", encoding="utf-8") as handle:
-        json.dump(enriched_results, handle, ensure_ascii=False, indent=2)
+    PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+    update_party_vote_snapshots(enriched_results, vote_count_data)
 
-    with vote_count_output_path.open("w", encoding="utf-8") as handle:
-        json.dump(vote_count_data, handle, ensure_ascii=False, indent=2)
+    for output_path in results_output_paths:
+        with output_path.open("w", encoding="utf-8") as handle:
+            json.dump(enriched_results, handle, ensure_ascii=False, indent=2)
 
-    with electorate_map_output_path.open("w", encoding="utf-8") as handle:
-        json.dump(electorate_map_results, handle, ensure_ascii=False, indent=2)
+    for output_path in vote_count_output_paths:
+        with output_path.open("w", encoding="utf-8") as handle:
+            json.dump(vote_count_data, handle, ensure_ascii=False, indent=2)
 
-    with electorate_details_output_path.open("w", encoding="utf-8") as handle:
-        json.dump(electorate_details, handle, ensure_ascii=False, indent=2)
+    for output_path in electorate_map_output_paths:
+        with output_path.open("w", encoding="utf-8") as handle:
+            json.dump(electorate_map_results, handle, ensure_ascii=False, indent=2)
+
+    for output_path in electorate_details_output_paths:
+        with output_path.open("w", encoding="utf-8") as handle:
+            json.dump(electorate_details, handle, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

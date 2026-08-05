@@ -1,0 +1,529 @@
+import { useEffect, useRef, useState } from "react";
+import VerticalBarChart from "./components/VerticalBarChart";
+import SemiDonutChart from "./components/SemiDonutChart";
+import VoteCountBar from "./components/VoteCountBar";
+import InteractiveMap from "./components/InteractiveMap";
+import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
+import useIsMobile from "./hooks/useIsMobile";
+import useDashboardData from "./hooks/useDashboardData";
+
+const GENERAL_ELECTORATES = "general";
+const MAORI_ELECTORATES = "maori";
+const MAORI_ELECTORATE_NUMBERS = new Set([
+  "66",
+  "67",
+  "68",
+  "69",
+  "70",
+  "71",
+  "72",
+]);
+
+// Parties to be included in the charts
+const PARTY_CONFIG = [
+  {
+    label: "National",
+    code: "16",
+    previousVote: 25.6,
+    previousSeats: 33,
+    color: "#3399FF",
+  },
+  {
+    label: "Labour",
+    code: "13",
+    previousVote: 50.0,
+    previousSeats: 65,
+    color: "#FF0000",
+  },
+  {
+    label: "Green",
+    code: "10",
+    previousVote: 7.9,
+    previousSeats: 10,
+    color: "#009900",
+  },
+  {
+    label: "ACT",
+    code: "5",
+    previousVote: 7.6,
+    previousSeats: 10,
+    color: "#D3B641",
+  },
+  {
+    label: "NZ First",
+    code: "17",
+    previousVote: 2.6,
+    previousSeats: 0,
+    color: "#999999",
+  },
+  {
+    label: "Māori",
+    code: "14",
+    previousVote: 1.2,
+    previousSeats: 2,
+    color: "#AA00D4",
+  },
+  {
+    label: "Opportunity",
+    code: "24",
+    previousVote: 1.5,
+    previousSeats: 0,
+    color: "#F0E68C",
+  },
+];
+
+//Other parties configuration
+const OTHER_PARTY = {
+  label: "Other",
+  previousVote: 3.6,
+  previousSeats: 0,
+  color: "#454545",
+};
+
+//Sets the order for the parties on the seat chart
+const SEAT_CHART_ORDER = [
+  "Māori",
+  "Green",
+  "Labour",
+  "Opportunity",
+  "Other",
+  "NZ First",
+  "National",
+  "ACT",
+];
+
+//Sorts party vote chart by dercreasing vote share but keeps Others always at the end
+function sortByValueWithPinnedLast(data, pinnedLabel) {
+  const sortedItems = [...data]
+    .filter((item) => item.label !== pinnedLabel)
+    .sort((a, b) => b.value - a.value);
+
+  const pinnedItem = data.find((item) => item.label === pinnedLabel);
+
+  return pinnedItem ? [...sortedItems, pinnedItem] : sortedItems;
+}
+
+//Safely converts value to a vote share number
+function toNumber(value) {
+  return Number.parseFloat(value ?? 0) || 0;
+}
+
+//Safely converts value to a seat count number
+function toSeatNumber(value) {
+  return Number.parseInt(value ?? 0, 10) || 0;
+}
+
+//Rounds a number to one decimal place
+function roundToOneDecimal(value) {
+  return Number(value.toFixed(1));
+}
+
+//Builds a lookup map of results by party code
+function buildResultsLookup(rows) {
+  return new Map(rows.map((row) => [row.p_no, row]));
+}
+
+function formatPartyDisplayLabel(shortName, fullName) {
+  const sourceLabel = shortName || fullName || "Independent";
+
+  if (sourceLabel === "The Opportunities Party") {
+    return "Opportunity";
+  }
+
+  return sourceLabel
+    .replace(/\s+Party$/i, "")
+    .replace(/\s+Movement$/i, "")
+    .trim();
+}
+
+function fallbackSeatColor(partyCode) {
+  const seed = Number.parseInt(partyCode ?? 0, 10) || 0;
+  const hue = (seed * 47) % 360;
+  return `hsl(${hue} 38% 48%)`;
+}
+
+function formatRefreshTime(timestamp) {
+  if (!timestamp) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-NZ", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(timestamp);
+}
+
+function isMaoriElectorateNumber(electorateNumber) {
+  return MAORI_ELECTORATE_NUMBERS.has(String(electorateNumber ?? ""));
+}
+
+function filterElectorateDataByGroup(data, electorateGroup) {
+  if (!data) {
+    return null;
+  }
+
+  const isMaoriGroup = electorateGroup === MAORI_ELECTORATES;
+  const filteredByElectorateNumber = Object.fromEntries(
+    Object.entries(data.by_electorate_number ?? {}).filter(([electorateNumber]) =>
+      isMaoriGroup
+        ? isMaoriElectorateNumber(electorateNumber)
+        : !isMaoriElectorateNumber(electorateNumber),
+    ),
+  );
+
+  const filteredBySvgId = Object.fromEntries(
+    Object.entries(data.by_svg_id ?? {}).filter(([, entry]) =>
+      isMaoriGroup
+        ? isMaoriElectorateNumber(entry?.electorate_number)
+        : !isMaoriElectorateNumber(entry?.electorate_number),
+    ),
+  );
+
+  return {
+    ...data,
+    by_electorate_number: filteredByElectorateNumber,
+    by_svg_id: filteredBySvgId,
+  };
+}
+
+//Builds the party vote data for the chart
+function buildPartyVoteData(rows) {
+  const lookup = buildResultsLookup(rows);
+
+  //This gets the vote share and names of the parties we want to track
+  const trackedParties = PARTY_CONFIG.map((party) => {
+    const row = lookup.get(party.code);
+    const value = toNumber(row?.percent_votes);
+
+    return {
+      label: party.label,
+      value,
+      change: value - party.previousVote,
+      color: party.color,
+    };
+  });
+
+  //This calculates the vote share for Others
+  const totalVoteShare = rows.reduce((sum, row) => sum + toNumber(row.percent_votes), 0);
+  const trackedVoteShare = trackedParties.reduce((sum, party) => sum + party.value, 0);
+  const otherVoteShare = Math.max(totalVoteShare - trackedVoteShare, 0);
+
+  const otherParty = {
+    label: OTHER_PARTY.label,
+    value: roundToOneDecimal(otherVoteShare),
+    change: roundToOneDecimal(otherVoteShare - OTHER_PARTY.previousVote),
+    color: OTHER_PARTY.color,
+  };
+
+  return sortByValueWithPinnedLast([...trackedParties, otherParty], "Other");
+}
+
+//Builds the seat count data for the chart
+function buildSeatData(rows) {
+  const lookup = buildResultsLookup(rows);
+  const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
+  const seatLookup = new Map(
+    PARTY_CONFIG.map((party) => {
+      const row = lookup.get(party.code);
+      const value = toSeatNumber(row?.total_seats);
+
+      return [
+        party.label,
+        {
+          label: party.label,
+          value,
+          change: value - party.previousSeats,
+          color: party.color,
+        },
+      ];
+    }),
+  );
+
+  const extraSeatWinners = rows
+    .filter((row) => !trackedPartyCodes.has(row.p_no))
+    .map((row) => ({
+      partyCode: row.p_no,
+      label: formatPartyDisplayLabel(row.short_name, row.party_name),
+      value: toSeatNumber(row.total_seats),
+      change: toSeatNumber(row.total_seats),
+      color: fallbackSeatColor(row.p_no),
+    }))
+    .filter((party) => party.value > 0)
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+
+  return SEAT_CHART_ORDER.flatMap((label) => {
+    if (label === "Other") {
+      return extraSeatWinners;
+    }
+
+    const trackedParty = seatLookup.get(label);
+    return trackedParty ? [trackedParty] : [];
+  });
+}
+
+export default function App() {
+  const isMobile = useIsMobile();
+  const {
+    results,
+    voteCount,
+    electorateDetails,
+    electorateWinners,
+    nzMapMarkup,
+    nzHexMapMarkup,
+    maoriMapMarkup,
+    maoriHexMapMarkup,
+    isLoading,
+    error,
+    lastSuccessfulAt,
+    refreshIntervalMs,
+  } = useDashboardData();
+  const [electorateGroup, setElectorateGroup] = useState(GENERAL_ELECTORATES);
+  const [selectedElectorates, setSelectedElectorates] = useState({
+    [GENERAL_ELECTORATES]: null,
+    [MAORI_ELECTORATES]: null,
+  });
+  const [partyVoteMode, setPartyVoteMode] = useState("share");
+  const [mapViewMode, setMapViewMode] = useState("cartographic");
+  const savedMapViewsRef = useRef({
+    [GENERAL_ELECTORATES]: {
+      cartographic: null,
+      hex: null,
+    },
+    [MAORI_ELECTORATES]: {
+      cartographic: null,
+      hex: null,
+    },
+  });
+  const filteredElectorateDetails = filterElectorateDataByGroup(
+    electorateDetails,
+    electorateGroup,
+  );
+  const filteredElectorateWinners = filterElectorateDataByGroup(
+    electorateWinners,
+    electorateGroup,
+  );
+  const activeCartographicMapMarkup =
+    electorateGroup === MAORI_ELECTORATES ? maoriMapMarkup : nzMapMarkup;
+  const activeHexMapMarkup =
+    electorateGroup === MAORI_ELECTORATES ? maoriHexMapMarkup : nzHexMapMarkup;
+  const electorateLookup = filteredElectorateDetails?.by_electorate_number ?? {};
+  const selectedElectorateNumber = selectedElectorates[electorateGroup];
+  const selectedElectorate = selectedElectorateNumber
+    ? electorateLookup[selectedElectorateNumber] ?? null
+    : null;
+  const partyVoteData = buildPartyVoteData(results ?? []);
+  const seatData = buildSeatData(results ?? []);
+  const votesCountedData = voteCount
+    ? [
+        {
+          label: voteCount.label,
+          value: toNumber(voteCount.value),
+          color: "#EAD349",
+        },
+      ]
+    : [];
+
+  useEffect(() => {
+    if (isMobile || !filteredElectorateDetails) {
+      return;
+    }
+
+    if (selectedElectorateNumber && electorateLookup[selectedElectorateNumber]) {
+      return;
+    }
+
+    const fallbackElectorateNumber = Object.keys(electorateLookup)[0] ?? null;
+
+    if (!fallbackElectorateNumber) {
+      return;
+    }
+
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [electorateGroup]: fallbackElectorateNumber,
+    }));
+  }, [
+    electorateGroup,
+    electorateLookup,
+    filteredElectorateDetails,
+    isMobile,
+    selectedElectorateNumber,
+  ]);
+
+  function handleSelectElectorate(electorateNumber) {
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [electorateGroup]: electorateNumber,
+    }));
+  }
+
+  function handleCloseMobileElectorate() {
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [electorateGroup]: null,
+    }));
+  }
+
+  function handleMapViewSnapshot(nextView) {
+    savedMapViewsRef.current[electorateGroup][mapViewMode] = nextView;
+  }
+
+  function handleMapViewModeChange(nextViewMode) {
+    if (nextViewMode === mapViewMode) {
+      return;
+    }
+
+    setMapViewMode(nextViewMode);
+  }
+
+  function handleElectorateGroupChange(nextElectorateGroup) {
+    if (nextElectorateGroup === electorateGroup) {
+      return;
+    }
+
+    setElectorateGroup(nextElectorateGroup);
+  }
+
+  const liveStatusMessage = error
+    ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
+    : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
+
+  if (isLoading && !results) {
+    return (
+      <main className="dashboard-shell">
+        <section className="chart-panel chart-panel--full">
+          <h2>Loading latest results…</h2>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="dashboard-shell">
+      <section className="chart-panel chart-panel--full">
+        <div
+          className={`dashboard-live-status${error ? " is-stale" : " is-live"}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="dashboard-live-status__dot" aria-hidden="true" />
+          <span>{liveStatusMessage}</span>
+        </div>
+      </section>
+
+      <section className="chart-panel chart-panel--full">
+        <h2>Votes counted</h2>
+        {votesCountedData.length > 0 && (
+          <VoteCountBar
+            data={votesCountedData}
+            barHeight={15}
+            valueFontSize={14}
+          />
+        )}
+      </section>
+
+      <section className="chart-panel">
+        <div className="chart-header">
+          <h2>Party vote</h2>
+          <div className="chart-toggle" role="tablist" aria-label="Party vote chart mode">
+            <button
+              type="button"
+              className={`chart-toggle__button${partyVoteMode === "share" ? " is-active" : ""}`}
+              onClick={() => setPartyVoteMode("share")}
+            >
+              Vote share
+            </button>
+            <button
+              type="button"
+              className={`chart-toggle__button${partyVoteMode === "change" ? " is-active" : ""}`}
+              onClick={() => setPartyVoteMode("change")}
+            >
+              Change
+            </button>
+          </div>
+        </div>
+        {partyVoteData.length > 0 && (
+          <VerticalBarChart
+            data={partyVoteData}
+            height={560}
+            mode={partyVoteMode}
+          />
+        )}
+      </section>
+
+      <section className="chart-panel">
+        <h2>Seat count</h2>
+        {seatData.length > 0 && <SemiDonutChart data={seatData} />}
+      </section>
+
+      <section className="chart-panel chart-panel--full">
+        <div className="chart-header">
+          <h2>Electorates</h2>
+          <div className="chart-toggle" role="tablist" aria-label="Electorate map type">
+            <button
+              type="button"
+              className={`chart-toggle__button${electorateGroup === GENERAL_ELECTORATES ? " is-active" : ""}`}
+              onClick={() => handleElectorateGroupChange(GENERAL_ELECTORATES)}
+            >
+              General Electorates
+            </button>
+            <button
+              type="button"
+              className={`chart-toggle__button${electorateGroup === MAORI_ELECTORATES ? " is-active" : ""}`}
+              onClick={() => handleElectorateGroupChange(MAORI_ELECTORATES)}
+            >
+              Māori Electorates
+            </button>
+          </div>
+        </div>
+        <div className="map-explorer">
+          {isMobile ? (
+            <div className="map-explorer__mobile">
+              <InteractiveMap
+                electorateWinners={filteredElectorateWinners}
+                electorateDetails={filteredElectorateDetails}
+                cartographicMapMarkup={activeCartographicMapMarkup}
+                hexMapMarkup={activeHexMapMarkup}
+                electorateGroup={electorateGroup}
+                selectedElectorateNumber={selectedElectorateNumber}
+                onSelectElectorate={handleSelectElectorate}
+                viewMode={mapViewMode}
+                onViewModeChange={handleMapViewModeChange}
+                savedView={savedMapViewsRef.current[electorateGroup][mapViewMode]}
+                onViewSnapshot={handleMapViewSnapshot}
+              />
+              {selectedElectorate && filteredElectorateDetails && (
+                <div className="map-explorer__mobile-overlay">
+                  <ElectorateDetailPanel
+                    electorate={selectedElectorate}
+                    onClose={handleCloseMobileElectorate}
+                    showCloseButton
+                    closeLabel="Back to map"
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <InteractiveMap
+                electorateWinners={filteredElectorateWinners}
+                electorateDetails={filteredElectorateDetails}
+                cartographicMapMarkup={activeCartographicMapMarkup}
+                hexMapMarkup={activeHexMapMarkup}
+                electorateGroup={electorateGroup}
+                selectedElectorateNumber={selectedElectorateNumber}
+                onSelectElectorate={handleSelectElectorate}
+                viewMode={mapViewMode}
+                onViewModeChange={handleMapViewModeChange}
+                savedView={savedMapViewsRef.current[electorateGroup][mapViewMode]}
+                onViewSnapshot={handleMapViewSnapshot}
+              />
+              <ElectorateDetailPanel electorate={selectedElectorate} />
+            </>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
