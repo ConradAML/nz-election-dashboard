@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   NEUTRAL_PARTY_COLOR,
   PARTY_COLORS,
 } from "../constants/partyColors";
 import { formatPartyDisplayLabel } from "../utils/partyDisplay";
+
+const TRANSITION_DURATION_MS = 320;
 
 function formatNumber(value) {
   return new Intl.NumberFormat("en-NZ").format(value ?? 0);
@@ -11,6 +13,26 @@ function formatNumber(value) {
 
 function formatPercent(value) {
   return `${Number(value ?? 0).toFixed(1)}%`;
+}
+
+function formatChange(value) {
+  const numericValue = Number(value);
+  return `${numericValue > 0 ? "+" : ""}${numericValue.toFixed(1)}pp`;
+}
+
+function changeColor(value) {
+  if (value > 0) return "#15803d";
+  if (value < 0) return "#c62828";
+  return "#666666";
+}
+
+function easeInOutCubic(progress) {
+  if (progress < 0.5) return 4 * progress * progress * progress;
+  return 1 - ((-2 * progress + 2) ** 3) / 2;
+}
+
+function lerp(start, end, progress) {
+  return start + (end - start) * progress;
 }
 
 function partyColor(partyCode) {
@@ -56,9 +78,69 @@ function formatPartyLabel(shortName, fullName) {
   return formatPartyDisplayLabel(shortName, fullName || "Leading");
 }
 
-function VoteRows({ rows, getKey, getLabel, getPartyLabel }) {
+function VoteRows({ rows, getKey, getLabel, getPartyLabel, mode }) {
+  const [transitionState, setTransitionState] = useState({
+    from: mode,
+    to: mode,
+    progress: 1,
+  });
+  const frameRef = useRef(null);
+  const previousModeRef = useRef(mode);
   const maxVotes = useMemo(
     () => Math.max(...rows.map((row) => row.votes), 0),
+    [rows],
+  );
+
+  useEffect(() => {
+    if (previousModeRef.current === mode) return undefined;
+
+    if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+
+    const fromMode = previousModeRef.current;
+    const startedAt = performance.now();
+    previousModeRef.current = mode;
+    setTransitionState({ from: fromMode, to: mode, progress: 0 });
+
+    function step(now) {
+      const progress = Math.min((now - startedAt) / TRANSITION_DURATION_MS, 1);
+
+      if (progress >= 1) {
+        setTransitionState({ from: mode, to: mode, progress: 1 });
+        frameRef.current = null;
+        return;
+      }
+
+      setTransitionState({ from: fromMode, to: mode, progress });
+      frameRef.current = window.requestAnimationFrame(step);
+    }
+
+    frameRef.current = window.requestAnimationFrame(step);
+
+    return () => {
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+    };
+  }, [mode]);
+
+  useEffect(
+    () => () => {
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+    },
+    [],
+  );
+
+  const isTransitioning =
+    transitionState.from !== transitionState.to && transitionState.progress < 1;
+  const easedProgress = easeInOutCubic(transitionState.progress);
+  const changeBlend = isTransitioning
+    ? transitionState.to === "change"
+      ? easedProgress
+      : 1 - easedProgress
+    : mode === "change"
+      ? 1
+      : 0;
+  const showingChange = changeBlend > 0.5;
+  const maxAbsChange = useMemo(
+    () => Math.max(...rows.map((row) => Math.abs(row.change ?? 0)), 1),
     [rows],
   );
 
@@ -68,15 +150,51 @@ function VoteRows({ rows, getKey, getLabel, getPartyLabel }) {
         <div className="electorate-share-row" key={getKey(row)}>
           <div className="electorate-share-row__top">
             <span className="electorate-share-row__name">{getLabel(row)}</span>
-            <span className="electorate-share-row__share">
-              {row.vote_share.toFixed(1)}%
-            </span>
+            {showingChange ? (
+              <span
+                className="electorate-share-row__share"
+                style={{ color: changeColor(row.change) }}
+              >
+                {Number.isFinite(row.change) ? formatChange(row.change) : "—"}
+              </span>
+            ) : (
+              <span className="electorate-share-row__share-group">
+                <span className="electorate-share-row__share">
+                  {row.vote_share.toFixed(1)}%
+                </span>
+                {Number.isFinite(row.change) && (
+                  <span
+                    className="electorate-share-row__change"
+                    style={{ color: changeColor(row.change) }}
+                  >
+                    {formatChange(row.change)}
+                  </span>
+                )}
+              </span>
+            )}
           </div>
-          <div className="electorate-share-row__bar">
+          <div className={`electorate-share-row__bar${showingChange ? " is-change" : ""}`}>
+            <div
+              className="electorate-share-row__zero-line"
+              style={{ opacity: changeBlend }}
+            />
             <div
               className="electorate-share-row__fill"
               style={{
-                width: `${maxVotes === 0 ? 0 : (row.votes / maxVotes) * 100}%`,
+                left: `${lerp(
+                  0,
+                  row.change >= 0
+                    ? 50
+                    : 50 - (Math.abs(row.change ?? 0) / maxAbsChange) * 50,
+                  changeBlend,
+                )}%`,
+                width: `${lerp(
+                  maxVotes === 0 ? 0 : (row.votes / maxVotes) * 100,
+                  Number.isFinite(row.change)
+                    ? (Math.abs(row.change) / maxAbsChange) * 50
+                    : 0,
+                  changeBlend,
+                )}%`,
                 background: partyColor(row.party_code),
               }}
             />
@@ -100,6 +218,7 @@ export default function ElectorateDetailPanel({
   closeLabel = "Close",
 }) {
   const [activeTab, setActiveTab] = useState("electorate");
+  const [resultMode, setResultMode] = useState("share");
 
   if (!electorate) {
     return (
@@ -257,10 +376,29 @@ export default function ElectorateDetailPanel({
       </div>
 
       <div className="electorate-panel__section">
-        <h3>{heading}</h3>
+        <div className="electorate-panel__section-header">
+          <h3>{heading}</h3>
+          <div className="chart-toggle" role="tablist" aria-label={`${heading} chart mode`}>
+            <button
+              type="button"
+              className={`chart-toggle__button${resultMode === "share" ? " is-active" : ""}`}
+              onClick={() => setResultMode("share")}
+            >
+              Vote share
+            </button>
+            <button
+              type="button"
+              className={`chart-toggle__button${resultMode === "change" ? " is-active" : ""}`}
+              onClick={() => setResultMode("change")}
+            >
+              Change
+            </button>
+          </div>
+        </div>
         {isElectorateTab ? (
           <VoteRows
             rows={electorate.candidate_results}
+            mode={resultMode}
             getKey={(row) => row.candidate_number}
             getLabel={(row) => row.candidate_name}
             getPartyLabel={(row) => formatPartyLabel(row.party_short_name, row.party_name)}
@@ -268,6 +406,7 @@ export default function ElectorateDetailPanel({
         ) : (
           <VoteRows
             rows={electorate.party_vote_results}
+            mode={resultMode}
             getKey={(row) => row.party_code}
             getLabel={(row) => formatPartyLabel(row.party_short_name, row.party_name)}
             getPartyLabel={() => ""}

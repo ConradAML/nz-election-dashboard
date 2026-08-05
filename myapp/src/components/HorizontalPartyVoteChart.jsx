@@ -12,6 +12,10 @@ function formatVotes(value) {
   return new Intl.NumberFormat("en-NZ").format(value ?? 0);
 }
 
+function changeColor(change) {
+  return change < 0 ? "#ef4444" : "#22c55e";
+}
+
 function easeInOutCubic(progress) {
   if (progress < 0.5) {
     return 4 * progress * progress * progress;
@@ -215,7 +219,7 @@ export default function HorizontalPartyVoteChart({
           <div style={{ marginTop: "4px", color: "#d6d6d6" }}>
             Votes: {formatVotes(tooltip.votes)}
           </div>
-          <div style={{ marginTop: "4px", color: tooltip.color }}>
+          <div style={{ marginTop: "4px", color: changeColor(tooltip.change) }}>
             Change: {formatChange(tooltip.change)}pp
           </div>
         </div>

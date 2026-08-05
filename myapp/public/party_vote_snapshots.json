@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "election": "2026",
+  "synthetic": true,
+  "snapshots": [
+    {
+      "timestamp": "2026-11-07T06:00:00Z", "percentCounted": 5.0,
+      "totalVotingPlacesCounted": 533, "totalVotesCast": 150000, "turnout": 4.1,
+      "projectedSeats": { "5": 12, "10": 13, "13": 29, "14": 5, "16": 54, "17": 7, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 9.5 }, "10": { "voteShare": 10.5 }, "13": { "voteShare": 24.0 }, "14": { "voteShare": 2.3 }, "16": { "voteShare": 42.5 }, "17": { "voteShare": 5.5 }, "24": { "voteShare": 2.5 }, "other": { "voteShare": 3.2 } }
+    },
+    {
+      "timestamp": "2026-11-07T06:25:00Z", "percentCounted": 12.0,
+      "totalVotingPlacesCounted": 1279, "totalVotesCast": 350000, "turnout": 9.5,
+      "projectedSeats": { "5": 12, "10": 13, "13": 30, "14": 5, "16": 53, "17": 7, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 9.3 }, "10": { "voteShare": 10.7 }, "13": { "voteShare": 24.5 }, "14": { "voteShare": 2.4 }, "16": { "voteShare": 41.8 }, "17": { "voteShare": 5.6 }, "24": { "voteShare": 2.4 }, "other": { "voteShare": 3.3 } }
+    },
+    {
+      "timestamp": "2026-11-07T06:50:00Z", "percentCounted": 22.0,
+      "totalVotingPlacesCounted": 2344, "totalVotesCast": 630000, "turnout": 17.1,
+      "projectedSeats": { "5": 12, "10": 13, "13": 31, "14": 5, "16": 52, "17": 7, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 9.2 }, "10": { "voteShare": 10.9 }, "13": { "voteShare": 25.0 }, "14": { "voteShare": 2.5 }, "16": { "voteShare": 41.1 }, "17": { "voteShare": 5.7 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.3 } }
+    },
+    {
+      "timestamp": "2026-11-07T07:15:00Z", "percentCounted": 35.0,
+      "totalVotingPlacesCounted": 3729, "totalVotesCast": 1000000, "turnout": 27.1,
+      "projectedSeats": { "5": 11, "10": 14, "13": 32, "14": 5, "16": 51, "17": 7, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 9.1 }, "10": { "voteShare": 11.0 }, "13": { "voteShare": 25.4 }, "14": { "voteShare": 2.6 }, "16": { "voteShare": 40.4 }, "17": { "voteShare": 5.8 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.4 } }
+    },
+    {
+      "timestamp": "2026-11-07T07:40:00Z", "percentCounted": 50.0,
+      "totalVotingPlacesCounted": 5328, "totalVotesCast": 1450000, "turnout": 39.3,
+      "projectedSeats": { "5": 11, "10": 14, "13": 33, "14": 5, "16": 50, "17": 7, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 9.0 }, "10": { "voteShare": 11.1 }, "13": { "voteShare": 25.8 }, "14": { "voteShare": 2.7 }, "16": { "voteShare": 39.8 }, "17": { "voteShare": 5.9 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.4 } }
+    },
+    {
+      "timestamp": "2026-11-07T08:05:00Z", "percentCounted": 65.0,
+      "totalVotingPlacesCounted": 6926, "totalVotesCast": 1860000, "turnout": 50.4,
+      "projectedSeats": { "5": 11, "10": 14, "13": 33, "14": 6, "16": 50, "17": 7, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 8.9 }, "10": { "voteShare": 11.3 }, "13": { "voteShare": 26.1 }, "14": { "voteShare": 2.8 }, "16": { "voteShare": 39.3 }, "17": { "voteShare": 5.9 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.4 } }
+    },
+    {
+      "timestamp": "2026-11-07T08:30:00Z", "percentCounted": 78.0,
+      "totalVotingPlacesCounted": 8311, "totalVotesCast": 2250000, "turnout": 61.0,
+      "projectedSeats": { "5": 11, "10": 14, "13": 33, "14": 6, "16": 49, "17": 8, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 8.8 }, "10": { "voteShare": 11.4 }, "13": { "voteShare": 26.4 }, "14": { "voteShare": 2.9 }, "16": { "voteShare": 38.9 }, "17": { "voteShare": 6.0 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.3 } }
+    },
+    {
+      "timestamp": "2026-11-07T08:55:00Z", "percentCounted": 88.0,
+      "totalVotingPlacesCounted": 9376, "totalVotesCast": 2520000, "turnout": 68.3,
+      "projectedSeats": { "5": 11, "10": 15, "13": 33, "14": 6, "16": 48, "17": 8, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 8.7 }, "10": { "voteShare": 11.5 }, "13": { "voteShare": 26.6 }, "14": { "voteShare": 3.0 }, "16": { "voteShare": 38.5 }, "17": { "voteShare": 6.0 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.4 } }
+    },
+    {
+      "timestamp": "2026-11-07T09:20:00Z", "percentCounted": 95.0,
+      "totalVotingPlacesCounted": 10122, "totalVotesCast": 2720000, "turnout": 73.7,
+      "projectedSeats": { "5": 11, "10": 15, "13": 34, "14": 6, "16": 48, "17": 8, "24": 0, "other": 0 },
+      "parties": { "5": { "voteShare": 8.7 }, "10": { "voteShare": 11.6 }, "13": { "voteShare": 26.8 }, "14": { "voteShare": 3.0 }, "16": { "voteShare": 38.2 }, "17": { "voteShare": 6.1 }, "24": { "voteShare": 2.3 }, "other": { "voteShare": 3.3 } }
+    },
+    {
+      "timestamp": "2026-11-07T09:45:00Z", "percentCounted": 100.0,
+      "totalVotingPlacesCounted": 10655, "totalVotesCast": 2867478, "turnout": 77.7,
+      "projectedSeats": { "5": 11, "10": 15, "13": 34, "14": 6, "16": 48, "17": 8, "24": 0, "other": 0 },
+      "parties": { "5": { "votes": 246473, "voteShare": 8.64 }, "10": { "votes": 330907, "voteShare": 11.6 }, "13": { "votes": 767540, "voteShare": 26.91 }, "14": { "votes": 87844, "voteShare": 3.08 }, "16": { "votes": 1085851, "voteShare": 38.08 }, "17": { "votes": 173553, "voteShare": 6.08 }, "24": { "votes": 63344, "voteShare": 2.22 }, "other": { "votes": 95699, "voteShare": 3.29 } }
+    }
+  ]
+}

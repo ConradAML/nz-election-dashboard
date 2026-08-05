@@ -6,6 +6,8 @@ import InteractiveMap from "./components/InteractiveMap";
 import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
 import RegionVoteCarousel from "./components/RegionVoteCarousel";
 import HorizontalPartyVoteChart from "./components/HorizontalPartyVoteChart";
+import PartyHistoryChart from "./components/PartyHistoryChart";
+import VoteProgressionChart from "./components/VoteProgressionChart";
 import useIsMobile from "./hooks/useIsMobile";
 import useDashboardData from "./hooks/useDashboardData";
 import { PARTY_COLORS } from "./constants/partyColors";
@@ -176,6 +178,34 @@ function formatRefreshTime(timestamp) {
   }).format(timestamp);
 }
 
+function formatVoteUpdateTime(timestamp) {
+  if (!timestamp) {
+    return "No vote updates recorded yet";
+  }
+
+  return new Intl.DateTimeFormat("en-NZ", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Pacific/Auckland",
+    timeZoneName: "short",
+  }).format(new Date(timestamp));
+}
+
+function findLastNewVotesTimestamp(history) {
+  const snapshots = history?.snapshots ?? [];
+
+  for (let index = snapshots.length - 1; index > 0; index -= 1) {
+    if (snapshots[index].totalVotesCast !== snapshots[index - 1].totalVotesCast) {
+      return snapshots[index].timestamp;
+    }
+  }
+
+  return snapshots[0]?.timestamp ?? null;
+}
+
 function isMaoriElectorateNumber(electorateNumber) {
   return MAORI_ELECTORATE_NUMBERS.has(String(electorateNumber ?? ""));
 }
@@ -252,9 +282,11 @@ function createAggregatedPartyVoteGroup(regionName) {
   return {
     regionName,
     totalVotes: 0,
+    previousTotalVotes: 0,
     totalVotingPlacesCounted: 0,
     inferredTotalVotingPlaces: 0,
     trackedVotes: new Map(PARTY_CONFIG.map((party) => [party.code, 0])),
+    trackedPreviousVotes: new Map(PARTY_CONFIG.map((party) => [party.code, 0])),
   };
 }
 
@@ -267,6 +299,9 @@ function accumulateElectorateIntoPartyVoteGroup(group, electorate) {
     );
 
   group.totalVotes += electorateTotalVotes;
+  group.previousTotalVotes += toNumber(
+    electorate?.previous_total_valid_party_votes,
+  );
 
   const totalVotingPlacesCounted = toNumber(
     electorate?.total_voting_places_counted,
@@ -295,17 +330,26 @@ function accumulateElectorateIntoPartyVoteGroup(group, electorate) {
       partyCode,
       group.trackedVotes.get(partyCode) + toNumber(party?.votes),
     );
+    group.trackedPreviousVotes.set(
+      partyCode,
+      group.trackedPreviousVotes.get(partyCode) + toNumber(party?.previous_votes),
+    );
   }
 }
 
 function finalizeAggregatedPartyVoteGroup(group) {
   const trackedParties = PARTY_CONFIG.map((party) => {
     const votes = group.trackedVotes.get(party.code) ?? 0;
+    const previousVotes = group.trackedPreviousVotes.get(party.code) ?? 0;
     const value = group.totalVotes > 0 ? (votes / group.totalVotes) * 100 : 0;
+    const previousValue = group.previousTotalVotes > 0
+      ? (previousVotes / group.previousTotalVotes) * 100
+      : 0;
 
     return {
       label: party.label,
       value: roundToOneDecimal(value),
+      change: roundToOneDecimal(value - previousValue),
       color: party.color,
     };
   });
@@ -315,12 +359,25 @@ function finalizeAggregatedPartyVoteGroup(group) {
     0,
   );
   const otherVotes = Math.max(group.totalVotes - trackedVoteTotal, 0);
+  const trackedPreviousVoteTotal = [...group.trackedPreviousVotes.values()].reduce(
+    (sum, votes) => sum + votes,
+    0,
+  );
+  const otherPreviousVotes = Math.max(
+    group.previousTotalVotes - trackedPreviousVoteTotal,
+    0,
+  );
+  const otherValue = group.totalVotes > 0
+    ? (otherVotes / group.totalVotes) * 100
+    : 0;
+  const otherPreviousValue = group.previousTotalVotes > 0
+    ? (otherPreviousVotes / group.previousTotalVotes) * 100
+    : 0;
 
   const parties = sortByValueWithPinnedLast([...trackedParties, {
     label: OTHER_PARTY.label,
-    value: roundToOneDecimal(
-      group.totalVotes > 0 ? (otherVotes / group.totalVotes) * 100 : 0,
-    ),
+    value: roundToOneDecimal(otherValue),
+    change: roundToOneDecimal(otherValue - otherPreviousValue),
     color: OTHER_PARTY.color,
   }], "Other");
 
@@ -559,9 +616,11 @@ export default function App() {
   const {
     results,
     voteCount,
+    partyVoteSnapshots,
     electorateDetails,
     electorateWinners,
     electorateRegionsCsv,
+    regionMapMarkup,
     nzMapMarkup,
     nzHexMapMarkup,
     maoriMapMarkup,
@@ -688,6 +747,7 @@ export default function App() {
   const liveStatusMessage = error
     ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
     : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
+  const lastNewVotesTimestamp = findLastNewVotesTimestamp(partyVoteSnapshots);
 
   if (isLoading && !results) {
     return (
@@ -702,13 +762,14 @@ export default function App() {
   return (
     <main className="dashboard-shell">
       <section className="chart-panel chart-panel--full">
-        <div
-          className={`dashboard-live-status${error ? " is-stale" : " is-live"}`}
-          role="status"
-          aria-live="polite"
-        >
-          <span className="dashboard-live-status__dot" aria-hidden="true" />
-          <span>{liveStatusMessage}</span>
+        <div className="dashboard-live-status-group" role="status" aria-live="polite">
+          <div className={`dashboard-live-status${error ? " is-stale" : " is-live"}`}>
+            <span className="dashboard-live-status__dot" aria-hidden="true" />
+            <span>{liveStatusMessage}</span>
+          </div>
+          <p className="dashboard-live-status__update-time">
+            Last new votes reported: {formatVoteUpdateTime(lastNewVotesTimestamp)}
+          </p>
         </div>
       </section>
 
@@ -858,7 +919,18 @@ export default function App() {
             </>
           )}
         </div>
-        <RegionVoteCarousel regions={regionalPartyVoteData} />
+        <RegionVoteCarousel
+          regions={regionalPartyVoteData}
+          regionMapMarkup={regionMapMarkup}
+        />
+      </section>
+
+      <section className="chart-panel chart-panel--full">
+        <VoteProgressionChart history={partyVoteSnapshots} />
+      </section>
+
+      <section className="chart-panel chart-panel--full">
+        <PartyHistoryChart results={results} turnout={voteCount} />
       </section>
     </main>
   );
