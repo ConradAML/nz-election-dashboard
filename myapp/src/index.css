@@ -1288,9 +1288,23 @@ code {
     margin-bottom: 14px;
   }
 
+  .vote-progression__chart-wrap,
+  .party-history__chart-wrap {
+    overflow-x: hidden;
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .vote-progression__chart,
+  .party-history__chart {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .vote-progression__legend {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow-x: visible;
     padding-bottom: 10px;
   }
 
