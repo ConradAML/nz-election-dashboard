@@ -96,7 +96,7 @@ export default function VoteProgressionChart({ history }) {
   if (!snapshots.length) {
     return (
       <section className="vote-progression" aria-labelledby="vote-progression-title">
-        <h2 id="vote-progression-title">Vote share as counting progresses</h2>
+        <h2 id="vote-progression-title">Vote share as counting progressed</h2>
         <p className="dashboard-notice">No result snapshots have been collected yet.</p>
       </section>
     );
@@ -159,13 +159,8 @@ export default function VoteProgressionChart({ history }) {
                 ? `Coalition ${metricMode === "share" ? "vote share" : "projected seats"}`
                 : metricMode === "share"
                   ? "Vote share"
-                  : "Projected seats"} as counting progresses
+                  : "Projected seats"} as counting progressed
             </h2>
-            {history?.synthetic === true && (
-              <span className="vote-progression__synthetic-label" role="status">
-                Currently showing synthetic data
-              </span>
-            )}
             <div className="chart-toggle" role="tablist" aria-label="Progression chart horizontal axis">
               <button
                 type="button"
@@ -187,9 +182,6 @@ export default function VoteProgressionChart({ history }) {
               </button>
             </div>
           </div>
-          <p className="vote-progression__subtitle">
-            Each point is a saved results update. All {seriesMode === "parties" ? "party groups" : "coalition options"} remain visible for direct comparison.
-          </p>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import SemiDonutChart from "./components/SemiDonutChart";
 import VoteCountBar from "./components/VoteCountBar";
 import InteractiveMap from "./components/InteractiveMap";
 import ElectorateDetailPanel from "./components/ElectorateDetailPanel";
+import ElectorateSearch from "./components/ElectorateSearch";
 import RegionVoteCarousel from "./components/RegionVoteCarousel";
 import HorizontalPartyVoteChart from "./components/HorizontalPartyVoteChart";
 import PartyHistoryChart from "./components/PartyHistoryChart";
@@ -114,6 +115,27 @@ const OTHER_PARTY = {
   previousSeats: 0,
   color: "#454545",
 };
+
+const RESULTS_2023_BY_PARTY_CODE = {
+  "5": { vote: 8.64, seats: 11 },
+  "10": { vote: 11.6, seats: 15 },
+  "13": { vote: 26.91, seats: 34 },
+  "14": { vote: 3.08, seats: 6 },
+  "16": { vote: 38.08, seats: 48 },
+  "17": { vote: 6.08, seats: 8 },
+  "24": { vote: 2.22, seats: 0 },
+  "34": { vote: 0.15, seats: 0 },
+  "36": { vote: 0.45, seats: 0 },
+  "37": { vote: 0.56, seats: 0 },
+  "49": { vote: 0.23, seats: 0 },
+  "50": { vote: 0.05, seats: 0 },
+  "51": { vote: 0.33, seats: 0 },
+  "52": { vote: 0.17, seats: 0 },
+  "54": { vote: 1.2, seats: 0 },
+  "55": { vote: 0.07, seats: 0 },
+  "56": { vote: 0.08, seats: 0 },
+};
+const OTHER_PARTY_VOTE_2023 = 3.38;
 
 //Sets the order for the parties on the seat chart
 const SEAT_CHART_ORDER = [
@@ -486,7 +508,7 @@ function filterElectorateDataByGroup(data, electorateGroup) {
 }
 
 //Builds the party vote data for the chart
-function buildPartyVoteData(rows) {
+function buildPartyVoteData(rows, use2023Baseline = false) {
   const lookup = buildResultsLookup(rows);
   const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
 
@@ -498,7 +520,11 @@ function buildPartyVoteData(rows) {
     return {
       label: party.label,
       value,
-      change: value - party.previousVote,
+      change: value - (
+        use2023Baseline
+          ? RESULTS_2023_BY_PARTY_CODE[party.code]?.vote ?? 0
+          : party.previousVote
+      ),
       color: party.color,
     };
   });
@@ -512,7 +538,11 @@ function buildPartyVoteData(rows) {
         label: formatMainChartPartyLabel(row.short_name, row.party_name),
         partyCode: row.p_no,
         value,
-        change: roundToOneDecimal(value),
+        change: roundToOneDecimal(
+          value - (use2023Baseline
+            ? RESULTS_2023_BY_PARTY_CODE[row.p_no]?.vote ?? 0
+            : 0),
+        ),
         color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
         totalSeats: toSeatNumber(row.total_seats),
       };
@@ -531,7 +561,11 @@ function buildPartyVoteData(rows) {
   const otherParty = {
     label: OTHER_PARTY.label,
     value: roundToOneDecimal(otherVoteShare),
-    change: roundToOneDecimal(otherVoteShare - OTHER_PARTY.previousVote),
+    change: roundToOneDecimal(
+      otherVoteShare - (
+        use2023Baseline ? OTHER_PARTY_VOTE_2023 : OTHER_PARTY.previousVote
+      ),
+    ),
     color: OTHER_PARTY.color,
   };
 
@@ -541,7 +575,7 @@ function buildPartyVoteData(rows) {
   );
 }
 
-function buildAllPartyVoteData(rows) {
+function buildAllPartyVoteData(rows, use2023Baseline = false) {
   const previousVoteLookup = new Map(
     PARTY_CONFIG.map((party) => [party.code, party.previousVote]),
   );
@@ -552,7 +586,9 @@ function buildAllPartyVoteData(rows) {
   return [...rows]
     .map((row) => {
       const value = toNumber(row.percent_votes);
-      const previousVote = previousVoteLookup.get(row.p_no) ?? 0;
+      const previousVote = use2023Baseline
+        ? RESULTS_2023_BY_PARTY_CODE[row.p_no]?.vote ?? 0
+        : previousVoteLookup.get(row.p_no) ?? 0;
 
       return {
         label:
@@ -569,7 +605,7 @@ function buildAllPartyVoteData(rows) {
 }
 
 //Builds the seat count data for the chart
-function buildSeatData(rows) {
+function buildSeatData(rows, use2023Baseline = false) {
   const lookup = buildResultsLookup(rows);
   const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
   const seatLookup = new Map(
@@ -582,7 +618,11 @@ function buildSeatData(rows) {
         {
           label: party.label,
           value,
-          change: value - party.previousSeats,
+          change: value - (
+            use2023Baseline
+              ? RESULTS_2023_BY_PARTY_CODE[party.code]?.seats ?? 0
+              : party.previousSeats
+          ),
           color: party.color,
         },
       ];
@@ -595,7 +635,11 @@ function buildSeatData(rows) {
       partyCode: row.p_no,
       label: formatPartyDisplayLabel(row.short_name, row.party_name),
       value: toSeatNumber(row.total_seats),
-      change: toSeatNumber(row.total_seats),
+      change: toSeatNumber(row.total_seats) - (
+        use2023Baseline
+          ? RESULTS_2023_BY_PARTY_CODE[row.p_no]?.seats ?? 0
+          : 0
+      ),
       color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
     }))
     .filter((party) => party.value > 0)
@@ -618,6 +662,7 @@ export default function App() {
     voteCount,
     partyVoteSnapshots,
     electorateDetails,
+    baselineElectorateDetails,
     electorateWinners,
     electorateRegionsCsv,
     regionMapMarkup,
@@ -625,10 +670,15 @@ export default function App() {
     nzHexMapMarkup,
     maoriMapMarkup,
     maoriHexMapMarkup,
+    aucklandMapMarkup,
+    christchurchMapMarkup,
+    hamiltonMapMarkup,
+    wellingtonMapMarkup,
     isLoading,
     error,
     lastSuccessfulAt,
     refreshIntervalMs,
+    isSimulatedData,
   } = useDashboardData();
   const [electorateGroup, setElectorateGroup] = useState(GENERAL_ELECTORATES);
   const [selectedElectorates, setSelectedElectorates] = useState({
@@ -638,6 +688,7 @@ export default function App() {
   const [partyVoteMode, setPartyVoteMode] = useState("share");
   const [showAllParties, setShowAllParties] = useState(false);
   const [mapViewMode, setMapViewMode] = useState("cartographic");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const savedMapViewsRef = useRef({
     [GENERAL_ELECTORATES]: {
       cartographic: null,
@@ -650,6 +701,10 @@ export default function App() {
   });
   const filteredElectorateDetails = filterElectorateDataByGroup(
     electorateDetails,
+    electorateGroup,
+  );
+  const filteredBaselineElectorateDetails = filterElectorateDataByGroup(
+    baselineElectorateDetails,
     electorateGroup,
   );
   const filteredElectorateWinners = filterElectorateDataByGroup(
@@ -665,9 +720,9 @@ export default function App() {
   const selectedElectorate = selectedElectorateNumber
     ? electorateLookup[selectedElectorateNumber] ?? null
     : null;
-  const partyVoteData = buildPartyVoteData(results ?? []);
-  const allPartyVoteData = buildAllPartyVoteData(results ?? []);
-  const seatData = buildSeatData(results ?? []);
+  const partyVoteData = buildPartyVoteData(results ?? [], isSimulatedData);
+  const allPartyVoteData = buildAllPartyVoteData(results ?? [], isSimulatedData);
+  const seatData = buildSeatData(results ?? [], isSimulatedData);
   const regionalPartyVoteData = buildRegionalPartyVoteData(
     electorateDetails,
     electorateRegionsCsv,
@@ -717,6 +772,19 @@ export default function App() {
     }));
   }
 
+  function handleSearchElectorate(electorateNumber) {
+    const nextElectorateGroup = isMaoriElectorateNumber(electorateNumber)
+      ? MAORI_ELECTORATES
+      : GENERAL_ELECTORATES;
+
+    setElectorateGroup(nextElectorateGroup);
+    setSelectedElectorates((currentSelections) => ({
+      ...currentSelections,
+      [nextElectorateGroup]: electorateNumber,
+    }));
+    setMobileSearchOpen(false);
+  }
+
   function handleCloseMobileElectorate() {
     setSelectedElectorates((currentSelections) => ({
       ...currentSelections,
@@ -744,9 +812,11 @@ export default function App() {
     setElectorateGroup(nextElectorateGroup);
   }
 
-  const liveStatusMessage = error
-    ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
-    : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
+  const liveStatusMessage = isSimulatedData
+    ? "Simulated dataset loaded"
+    : error
+      ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
+      : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
   const lastNewVotesTimestamp = findLastNewVotesTimestamp(partyVoteSnapshots);
 
   if (isLoading && !results) {
@@ -762,6 +832,11 @@ export default function App() {
   return (
     <main className="dashboard-shell">
       <section className="chart-panel chart-panel--full">
+        {isSimulatedData && (
+          <div className="dashboard-simulated-banner" role="status">
+            Currently showing simulated 2026 election data
+          </div>
+        )}
         <div className="dashboard-live-status-group" role="status" aria-live="polite">
           <div className={`dashboard-live-status${error ? " is-stale" : " is-live"}`}>
             <span className="dashboard-live-status__dot" aria-hidden="true" />
@@ -855,7 +930,7 @@ export default function App() {
 
       <section className="chart-panel chart-panel--full">
         <div className="chart-header">
-          <h2>Electorates</h2>
+          <h2>Electorate map</h2>
           <div className="chart-toggle" role="tablist" aria-label="Electorate map type">
             <button
               type="button"
@@ -876,11 +951,36 @@ export default function App() {
         <div className="map-explorer">
           {isMobile ? (
             <div className="map-explorer__mobile">
+              <button
+                type="button"
+                className="map-explorer__search-button"
+                onClick={() => setMobileSearchOpen(true)}
+                aria-label="Search electorates"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m16 16 4 4" />
+                </svg>
+              </button>
+              {mobileSearchOpen && (
+                <ElectorateSearch
+                  electorates={electorateDetails?.by_electorate_number}
+                  onSelect={handleSearchElectorate}
+                  onClose={() => setMobileSearchOpen(false)}
+                  autoFocus
+                  mobile
+                />
+              )}
               <InteractiveMap
                 electorateWinners={filteredElectorateWinners}
                 electorateDetails={filteredElectorateDetails}
+                baselineElectorateDetails={filteredBaselineElectorateDetails}
                 cartographicMapMarkup={activeCartographicMapMarkup}
                 hexMapMarkup={activeHexMapMarkup}
+                aucklandMapMarkup={aucklandMapMarkup}
+                christchurchMapMarkup={christchurchMapMarkup}
+                hamiltonMapMarkup={hamiltonMapMarkup}
+                wellingtonMapMarkup={wellingtonMapMarkup}
                 electorateGroup={electorateGroup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
@@ -905,8 +1005,13 @@ export default function App() {
               <InteractiveMap
                 electorateWinners={filteredElectorateWinners}
                 electorateDetails={filteredElectorateDetails}
+                baselineElectorateDetails={filteredBaselineElectorateDetails}
                 cartographicMapMarkup={activeCartographicMapMarkup}
                 hexMapMarkup={activeHexMapMarkup}
+                aucklandMapMarkup={aucklandMapMarkup}
+                christchurchMapMarkup={christchurchMapMarkup}
+                hamiltonMapMarkup={hamiltonMapMarkup}
+                wellingtonMapMarkup={wellingtonMapMarkup}
                 electorateGroup={electorateGroup}
                 selectedElectorateNumber={selectedElectorateNumber}
                 onSelectElectorate={handleSelectElectorate}
@@ -915,7 +1020,15 @@ export default function App() {
                 savedView={savedMapViewsRef.current[electorateGroup][mapViewMode]}
                 onViewSnapshot={handleMapViewSnapshot}
               />
-              <ElectorateDetailPanel electorate={selectedElectorate} />
+              <ElectorateDetailPanel
+                electorate={selectedElectorate}
+                searchControl={(
+                  <ElectorateSearch
+                    electorates={electorateDetails?.by_electorate_number}
+                    onSelect={handleSearchElectorate}
+                  />
+                )}
+              />
             </>
           )}
         </div>

@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  resolveDashboardDataFile,
+  USE_SIMULATED_DATA,
+} from "../constants/dataSource";
 
 const REFRESH_INTERVAL_MS = 30_000;
 
@@ -9,7 +13,10 @@ function buildAssetUrl(fileName) {
 }
 
 async function fetchJson(fileName, signal) {
-  const response = await fetch(buildAssetUrl(fileName), { signal, cache: "no-store" });
+  const response = await fetch(
+    buildAssetUrl(resolveDashboardDataFile(fileName)),
+    { signal, cache: "no-store" },
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to load ${fileName}: ${response.status}`);
@@ -18,8 +25,37 @@ async function fetchJson(fileName, signal) {
   return response.json();
 }
 
+async function fetchPreservedJson(fileName, signal) {
+  const response = await fetch(
+    buildAssetUrl(`datasets/current/${fileName}`),
+    { signal, cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to load preserved ${fileName}: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function fetchText(fileName, signal) {
-  const response = await fetch(buildAssetUrl(fileName), { signal, cache: "no-store" });
+  const response = await fetch(
+    buildAssetUrl(resolveDashboardDataFile(fileName)),
+    { signal, cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to load ${fileName}: ${response.status}`);
+  }
+
+  return response.text();
+}
+
+async function fetchStaticText(fileName, signal) {
+  const response = await fetch(
+    buildAssetUrl(fileName),
+    { signal, cache: "no-store" },
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to load ${fileName}: ${response.status}`);
@@ -34,6 +70,7 @@ export default function useDashboardData() {
     voteCount: null,
     partyVoteSnapshots: null,
     electorateDetails: null,
+    baselineElectorateDetails: null,
     electorateWinners: null,
     electorateRegionsCsv: null,
     regionMapMarkup: null,
@@ -41,6 +78,10 @@ export default function useDashboardData() {
     nzHexMapMarkup: null,
     maoriMapMarkup: null,
     maoriHexMapMarkup: null,
+    aucklandMapMarkup: null,
+    christchurchMapMarkup: null,
+    hamiltonMapMarkup: null,
+    wellingtonMapMarkup: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,6 +96,7 @@ export default function useDashboardData() {
         voteCount,
         partyVoteSnapshots,
         electorateDetails,
+        baselineElectorateDetails,
         electorateWinners,
         electorateRegionsCsv,
         regionMapMarkup,
@@ -62,11 +104,16 @@ export default function useDashboardData() {
         nzHexMapMarkup,
         maoriMapMarkup,
         maoriHexMapMarkup,
+        aucklandMapMarkup,
+        christchurchMapMarkup,
+        hamiltonMapMarkup,
+        wellingtonMapMarkup,
       ] = await Promise.all([
         fetchJson("results.json", signal),
         fetchJson("vote_count.json", signal),
         fetchJson("party_vote_snapshots.json", signal),
         fetchJson("electorate_details.json", signal),
+        fetchPreservedJson("electorate_details.json", signal),
         fetchJson("electorate_winners.json", signal),
         fetchText("general_electorates_2026_regions.csv", signal),
         fetchText("nzregions.svg", signal),
@@ -74,6 +121,10 @@ export default function useDashboardData() {
         fetchText("hexmap.svg", signal),
         fetchText("maorielectorates.svg", signal),
         fetchText("hexmap-maori.svg", signal),
+        fetchStaticText("auckland.svg", signal),
+        fetchStaticText("christchurch.svg", signal),
+        fetchStaticText("hamilton.svg", signal),
+        fetchStaticText("wellington.svg", signal),
       ]);
 
       if (!isActive) {
@@ -85,6 +136,7 @@ export default function useDashboardData() {
         voteCount,
         partyVoteSnapshots,
         electorateDetails,
+        baselineElectorateDetails,
         electorateWinners,
         electorateRegionsCsv,
         regionMapMarkup,
@@ -92,6 +144,10 @@ export default function useDashboardData() {
         nzHexMapMarkup,
         maoriMapMarkup,
         maoriHexMapMarkup,
+        aucklandMapMarkup,
+        christchurchMapMarkup,
+        hamiltonMapMarkup,
+        wellingtonMapMarkup,
       });
       setLastSuccessfulAt(Date.now());
       setError(null);
@@ -133,5 +189,6 @@ export default function useDashboardData() {
     error,
     lastSuccessfulAt,
     refreshIntervalMs: REFRESH_INTERVAL_MS,
+    isSimulatedData: USE_SIMULATED_DATA,
   };
 }

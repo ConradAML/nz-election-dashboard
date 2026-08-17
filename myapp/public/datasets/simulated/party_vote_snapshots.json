@@ -1,0 +1,517 @@
+{
+  "version": 1,
+  "election": "2026",
+  "synthetic": true,
+  "snapshots": [
+    {
+      "timestamp": "2026-11-07T07:00:00Z",
+      "percentCounted": 5.0,
+      "totalVotingPlacesCounted": 533,
+      "totalVotesCast": 143625,
+      "turnout": 3.9,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 12129,
+          "voteShare": 8.45
+        },
+        "10": {
+          "votes": 16409,
+          "voteShare": 11.43
+        },
+        "13": {
+          "votes": 41443,
+          "voteShare": 28.86
+        },
+        "14": {
+          "votes": 2011,
+          "voteShare": 1.4
+        },
+        "16": {
+          "votes": 43547,
+          "voteShare": 30.32
+        },
+        "17": {
+          "votes": 18248,
+          "voteShare": 12.71
+        },
+        "24": {
+          "votes": 6233,
+          "voteShare": 4.34
+        },
+        "other": {
+          "votes": 3605,
+          "voteShare": 2.51
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T07:25:00Z",
+      "percentCounted": 12.0,
+      "totalVotingPlacesCounted": 1279,
+      "totalVotesCast": 344700,
+      "turnout": 9.3,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 28989,
+          "voteShare": 8.41
+        },
+        "10": {
+          "votes": 39551,
+          "voteShare": 11.47
+        },
+        "13": {
+          "votes": 99970,
+          "voteShare": 29.0
+        },
+        "14": {
+          "votes": 4874,
+          "voteShare": 1.41
+        },
+        "16": {
+          "votes": 103789,
+          "voteShare": 30.11
+        },
+        "17": {
+          "votes": 43577,
+          "voteShare": 12.64
+        },
+        "24": {
+          "votes": 15153,
+          "voteShare": 4.4
+        },
+        "other": {
+          "votes": 8797,
+          "voteShare": 2.55
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T07:50:00Z",
+      "percentCounted": 22.0,
+      "totalVotingPlacesCounted": 2344,
+      "totalVotesCast": 631949,
+      "turnout": 17.1,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 52831,
+          "voteShare": 8.36
+        },
+        "10": {
+          "votes": 72952,
+          "voteShare": 11.54
+        },
+        "13": {
+          "votes": 184605,
+          "voteShare": 29.21
+        },
+        "14": {
+          "votes": 9062,
+          "voteShare": 1.43
+        },
+        "16": {
+          "votes": 188384,
+          "voteShare": 29.81
+        },
+        "17": {
+          "votes": 79322,
+          "voteShare": 12.55
+        },
+        "24": {
+          "votes": 28286,
+          "voteShare": 4.48
+        },
+        "other": {
+          "votes": 16507,
+          "voteShare": 2.61
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T08:15:00Z",
+      "percentCounted": 35.0,
+      "totalVotingPlacesCounted": 3729,
+      "totalVotesCast": 1005374,
+      "turnout": 27.2,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 83396,
+          "voteShare": 8.29
+        },
+        "10": {
+          "votes": 116975,
+          "voteShare": 11.63
+        },
+        "13": {
+          "votes": 296435,
+          "voteShare": 29.48
+        },
+        "14": {
+          "votes": 14678,
+          "voteShare": 1.46
+        },
+        "16": {
+          "votes": 295781,
+          "voteShare": 29.42
+        },
+        "17": {
+          "votes": 125018,
+          "voteShare": 12.44
+        },
+        "24": {
+          "votes": 46046,
+          "voteShare": 4.58
+        },
+        "other": {
+          "votes": 27045,
+          "voteShare": 2.69
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T08:40:00Z",
+      "percentCounted": 50.0,
+      "totalVotingPlacesCounted": 5328,
+      "totalVotesCast": 1436248,
+      "turnout": 38.9,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 118060,
+          "voteShare": 8.22
+        },
+        "10": {
+          "votes": 168616,
+          "voteShare": 11.74
+        },
+        "13": {
+          "votes": 428002,
+          "voteShare": 29.8
+        },
+        "14": {
+          "votes": 21400,
+          "voteShare": 1.49
+        },
+        "16": {
+          "votes": 416081,
+          "voteShare": 28.97
+        },
+        "17": {
+          "votes": 176659,
+          "voteShare": 12.3
+        },
+        "24": {
+          "votes": 67504,
+          "voteShare": 4.7
+        },
+        "other": {
+          "votes": 39928,
+          "voteShare": 2.78
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T09:05:00Z",
+      "percentCounted": 65.0,
+      "totalVotingPlacesCounted": 6926,
+      "totalVotesCast": 1867122,
+      "turnout": 50.5,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 152077,
+          "voteShare": 8.14
+        },
+        "10": {
+          "votes": 221161,
+          "voteShare": 11.85
+        },
+        "13": {
+          "votes": 562284,
+          "voteShare": 30.12
+        },
+        "14": {
+          "votes": 28380,
+          "voteShare": 1.52
+        },
+        "16": {
+          "votes": 532503,
+          "voteShare": 28.52
+        },
+        "17": {
+          "votes": 227135,
+          "voteShare": 12.16
+        },
+        "24": {
+          "votes": 89995,
+          "voteShare": 4.82
+        },
+        "other": {
+          "votes": 53586,
+          "voteShare": 2.87
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T09:30:00Z",
+      "percentCounted": 78.0,
+      "totalVotingPlacesCounted": 8311,
+      "totalVotesCast": 2240547,
+      "turnout": 60.6,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 181036,
+          "voteShare": 8.08
+        },
+        "10": {
+          "votes": 267432,
+          "voteShare": 11.94
+        },
+        "13": {
+          "votes": 680857,
+          "voteShare": 30.39
+        },
+        "14": {
+          "votes": 34639,
+          "voteShare": 1.55
+        },
+        "16": {
+          "votes": 630266,
+          "voteShare": 28.13
+        },
+        "17": {
+          "votes": 269941,
+          "voteShare": 12.05
+        },
+        "24": {
+          "votes": 110325,
+          "voteShare": 4.92
+        },
+        "other": {
+          "votes": 66051,
+          "voteShare": 2.95
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T09:55:00Z",
+      "percentCounted": 88.0,
+      "totalVotingPlacesCounted": 9376,
+      "totalVotesCast": 2527796,
+      "turnout": 68.4,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 202982,
+          "voteShare": 8.03
+        },
+        "10": {
+          "votes": 303487,
+          "voteShare": 12.01
+        },
+        "13": {
+          "votes": 773455,
+          "voteShare": 30.6
+        },
+        "14": {
+          "votes": 39585,
+          "voteShare": 1.57
+        },
+        "16": {
+          "votes": 703486,
+          "voteShare": 27.83
+        },
+        "17": {
+          "votes": 302274,
+          "voteShare": 11.96
+        },
+        "24": {
+          "votes": 126491,
+          "voteShare": 5.0
+        },
+        "other": {
+          "votes": 76036,
+          "voteShare": 3.01
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T10:20:00Z",
+      "percentCounted": 95.0,
+      "totalVotingPlacesCounted": 10122,
+      "totalVotesCast": 2728871,
+      "turnout": 73.8,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 218173,
+          "voteShare": 8.0
+        },
+        "10": {
+          "votes": 328965,
+          "voteShare": 12.05
+        },
+        "13": {
+          "votes": 838991,
+          "voteShare": 30.75
+        },
+        "14": {
+          "votes": 43116,
+          "voteShare": 1.58
+        },
+        "16": {
+          "votes": 753714,
+          "voteShare": 27.62
+        },
+        "17": {
+          "votes": 324599,
+          "voteShare": 11.89
+        },
+        "24": {
+          "votes": 138081,
+          "voteShare": 5.06
+        },
+        "other": {
+          "votes": 83231,
+          "voteShare": 3.05
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-07T10:45:00Z",
+      "percentCounted": 100.0,
+      "totalVotingPlacesCounted": 10655,
+      "totalVotesCast": 2872496,
+      "turnout": 77.7,
+      "projectedSeats": {
+        "5": 10,
+        "10": 15,
+        "13": 38,
+        "14": 2,
+        "16": 34,
+        "17": 15,
+        "24": 6,
+        "other": 0
+      },
+      "parties": {
+        "5": {
+          "votes": 228938,
+          "voteShare": 7.97
+        },
+        "10": {
+          "votes": 347285,
+          "voteShare": 12.09
+        },
+        "13": {
+          "votes": 886165,
+          "voteShare": 30.85
+        },
+        "14": {
+          "votes": 45673,
+          "voteShare": 1.59
+        },
+        "16": {
+          "votes": 789075,
+          "voteShare": 27.47
+        },
+        "17": {
+          "votes": 340391,
+          "voteShare": 11.85
+        },
+        "24": {
+          "votes": 146497,
+          "voteShare": 5.1
+        },
+        "other": {
+          "votes": 88473,
+          "voteShare": 3.08
+        }
+      }
+    }
+  ]
+}

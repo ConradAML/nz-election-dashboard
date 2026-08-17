@@ -216,6 +216,7 @@ export default function ElectorateDetailPanel({
   onClose,
   showCloseButton = false,
   closeLabel = "Close",
+  searchControl = null,
 }) {
   const [activeTab, setActiveTab] = useState("electorate");
   const [resultMode, setResultMode] = useState("share");
@@ -223,6 +224,9 @@ export default function ElectorateDetailPanel({
   if (!electorate) {
     return (
       <aside className="electorate-panel">
+        {searchControl && (
+          <div className="electorate-panel__search">{searchControl}</div>
+        )}
         <h2>Select an electorate</h2>
         <p>Click a coloured electorate on the map to see the vote breakdown.</p>
       </aside>
@@ -230,6 +234,9 @@ export default function ElectorateDetailPanel({
   }
 
   const isElectorateTab = activeTab === "electorate";
+  const electorateChangeAvailable = electorate.electorate_name !== "Port Waikato";
+  const changeAvailable = !isElectorateTab || electorateChangeAvailable;
+  const displayedResultMode = changeAvailable ? resultMode : "share";
   const heading = isElectorateTab ? "Electorate vote" : "Party vote";
   const totalVotes = isElectorateTab
     ? electorate.total_valid_candidate_votes
@@ -286,6 +293,9 @@ export default function ElectorateDetailPanel({
 
   return (
     <aside className="electorate-panel">
+      {searchControl && (
+        <div className="electorate-panel__search">{searchControl}</div>
+      )}
       {showCloseButton && (
         <div className="electorate-panel__close-row">
           <button
@@ -386,19 +396,21 @@ export default function ElectorateDetailPanel({
             >
               Vote share
             </button>
-            <button
-              type="button"
-              className={`chart-toggle__button${resultMode === "change" ? " is-active" : ""}`}
-              onClick={() => setResultMode("change")}
-            >
-              Change
-            </button>
+            {changeAvailable && (
+              <button
+                type="button"
+                className={`chart-toggle__button${resultMode === "change" ? " is-active" : ""}`}
+                onClick={() => setResultMode("change")}
+              >
+                Change
+              </button>
+            )}
           </div>
         </div>
         {isElectorateTab ? (
           <VoteRows
             rows={electorate.candidate_results}
-            mode={resultMode}
+            mode={displayedResultMode}
             getKey={(row) => row.candidate_number}
             getLabel={(row) => row.candidate_name}
             getPartyLabel={(row) => formatPartyLabel(row.party_short_name, row.party_name)}
@@ -406,7 +418,7 @@ export default function ElectorateDetailPanel({
         ) : (
           <VoteRows
             rows={electorate.party_vote_results}
-            mode={resultMode}
+            mode={displayedResultMode}
             getKey={(row) => row.party_code}
             getLabel={(row) => formatPartyLabel(row.party_short_name, row.party_name)}
             getPartyLabel={() => ""}

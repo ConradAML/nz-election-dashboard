@@ -64,12 +64,8 @@ export default function PartyHistoryChart({ results, turnout }) {
         <div>
           <h2 id="party-history-title">Vote history</h2>
           <p className="party-history__subtitle">
-            General-election vote share by party, plus election turnout. The latest point shows current 2026 results.
+            General election vote share by party (as well as turnout) over time
           </p>
-        </div>
-        <div className="party-history__latest" aria-live="polite">
-          <span>{activeTab.label} · 2026</span>
-          <strong>{formatPercent(points.at(-1)[1])}</strong>
         </div>
       </div>
 

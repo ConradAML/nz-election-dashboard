@@ -1,0 +1,55 @@
+{
+  "name": "Deterministic simulated 2026 election dataset",
+  "created": "2026-08-17T10:28:22.190913+00:00",
+  "seed": 20260817,
+  "pollAverages": {
+    "National": 30,
+    "Labour": 30,
+    "Green": 11,
+    "NZ First": 10,
+    "ACT": 8,
+    "Opportunity": 6,
+    "Māori": 2
+  },
+  "pollMargins": {
+    "National": 3,
+    "Labour": 3,
+    "Green": 2,
+    "NZ First": 2,
+    "ACT": 1.8,
+    "Opportunity": 1.5,
+    "Māori": 1
+  },
+  "simulatedNationalShares": {
+    "ACT New Zealand": 7.97,
+    "Animal Justice Party": 0.16,
+    "Aotearoa Legalise Cannabis Party": 0.42,
+    "DemocracyNZ": 0.22,
+    "Freedoms NZ": 0.31,
+    "Green Party": 12.09,
+    "Labour Party": 30.85,
+    "Leighton Baker": 0.07,
+    "National Party": 27.47,
+    "New Conservatives": 0.14,
+    "New Nation Party": 0.05,
+    "New Zealand First Party": 11.85,
+    "NZ Loyal": 1.12,
+    "NewZeal": 0.52,
+    "Te Pāti Māori": 1.59,
+    "The Opportunities Party (TOP)": 5.1,
+    "Women’s Rights Party": 0.07
+  },
+  "files": [
+    "results.json",
+    "vote_count.json",
+    "party_vote_snapshots.json",
+    "electorate_details.json",
+    "electorate_winners.json",
+    "general_electorates_2026_regions.csv",
+    "nzregions.svg",
+    "nzmap.svg",
+    "hexmap.svg",
+    "maorielectorates.svg",
+    "hexmap-maori.svg"
+  ]
+}

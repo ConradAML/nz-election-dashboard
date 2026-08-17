@@ -1,0 +1,18 @@
+{
+  "name": "Current dashboard data before simulated 2026 dataset",
+  "created": "2026-08-17T10:12:56.133307+00:00",
+  "files": [
+    "results.json",
+    "vote_count.json",
+    "party_vote_snapshots.json",
+    "electorate_details.json",
+    "electorate_winners.json",
+    "general_electorates_2026_regions.csv",
+    "nzregions.svg",
+    "nzmap.svg",
+    "hexmap.svg",
+    "maorielectorates.svg",
+    "hexmap-maori.svg"
+  ],
+  "immutableSnapshot": true
+}

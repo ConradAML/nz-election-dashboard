@@ -10,6 +10,7 @@ const CARTOGRAPHIC_VIEW = "cartographic";
 const HEX_VIEW = "hex";
 const GENERAL_ELECTORATES = "general";
 const MAORI_ELECTORATES = "maori";
+const NZ_WIDE_AREA = "nz-wide";
 const DEFAULT_MIN_SCALE = 0.45;
 const HEX_MIN_SCALE = 0.28;
 const MAX_SCALE = 8;
@@ -29,6 +30,47 @@ const MOBILE_HEX_FIT_PADDING = 24;
 const MOBILE_HEX_FIT_SCALE_MULTIPLIER = 0.68;
 const MAP_VIEW_TRANSITION_DURATION_MS = 560;
 const MORPH_POINT_COUNT = 36;
+const MAP_NEUTRAL_GRADIENT_COLOR = "#eeeae2";
+const MAP_NEGATIVE_COLOR = "#c62828";
+const MAP_POSITIVE_COLOR = "#15803d";
+
+const GENERAL_MAP_AREAS = [
+  { value: NZ_WIDE_AREA, label: "New Zealand" },
+  { value: "auckland", label: "Auckland" },
+  { value: "christchurch", label: "Christchurch" },
+  { value: "hamilton", label: "Hamilton" },
+  { value: "wellington", label: "Wellington" },
+];
+
+const MAP_PARTIES = [
+  { code: "16", label: "National" },
+  { code: "13", label: "Labour" },
+  { code: "10", label: "Green" },
+  { code: "5", label: "ACT" },
+  { code: "17", label: "NZ First" },
+  { code: "14", label: "Māori" },
+  { code: "24", label: "Opportunity" },
+];
+
+const MAP_DATA_OPTIONS = [
+  { value: "electorate-winner", label: "Electorate vote winner", kind: "electorate-winner" },
+  { value: "electorate-change", label: "Electorate seat changes", kind: "electorate-change" },
+  { value: "party-winner", label: "Party vote winner", kind: "party-winner" },
+  ...MAP_PARTIES.flatMap((party) => [
+    {
+      ...party,
+      value: `party-share-${party.code}`,
+      label: `${party.label} party vote`,
+      kind: "party-share",
+    },
+    {
+      ...party,
+      value: `party-change-${party.code}`,
+      label: `${party.label} party vote change`,
+      kind: "party-change",
+    },
+  ]),
+];
 
 function normalizeElectorateKey(value) {
   return (value ?? "")
@@ -40,6 +82,7 @@ function normalizeElectorateKey(value) {
     .replace(/^mt_/g, "mt_")
     .replace(/^st_/g, "st_")
     .replace(/papkura/g, "papakura")
+    .replace(/chrischurch/g, "christchurch")
     .replace(/invercargil(?!l)/g, "invercargill")
     .replace(/whangarei/g, "whangarei")
     .replace(/whangaparaoa/g, "whangaparaoa")
@@ -47,6 +90,7 @@ function normalizeElectorateKey(value) {
     .replace(/taupo/g, "taupo")
     .replace(/tamaki/g, "tamaki")
     .replace(/mangere/g, "mangere")
+    .replace(/manuwera/g, "manurewa")
     .replace(/otahuhu/g, "otahuhu")
     .replace(/kaikoura/g, "kaikoura")
     .replace(/waitakere/g, "waitakere")
@@ -78,6 +122,33 @@ function lightenColor(hexColor, amount) {
       .padStart(2, "0");
 
   return `#${mixChannel(red)}${mixChannel(green)}${mixChannel(blue)}`;
+}
+
+function mixColors(fromHex, toHex, amount) {
+  const from = fromHex.replace("#", "");
+  const to = toHex.replace("#", "");
+
+  if (!/^[\da-fA-F]{6}$/.test(from) || !/^[\da-fA-F]{6}$/.test(to)) {
+    return toHex;
+  }
+
+  const channel = (hex, start) => Number.parseInt(hex.slice(start, start + 2), 16);
+  const mixedChannel = (start) => Math.round(
+    channel(from, start) + (channel(to, start) - channel(from, start)) * amount,
+  ).toString(16).padStart(2, "0");
+
+  return `#${mixedChannel(0)}${mixedChannel(2)}${mixedChannel(4)}`;
+}
+
+function getMapDataOption(value) {
+  return MAP_DATA_OPTIONS.find((option) => option.value === value)
+    ?? MAP_DATA_OPTIONS[0];
+}
+
+function getPartyVoteResult(electorate, partyCode) {
+  return electorate?.party_vote_results?.find(
+    (party) => party.party_code === partyCode,
+  ) ?? null;
 }
 
 function getElectorateNumberFromTarget(target) {
@@ -222,10 +293,14 @@ function easeInOutCubic(progress) {
 function buildStyledSvgMarkup({
   rawMarkup,
   electorateWinners,
+  electorateDetails,
+  baselineElectorateDetails,
   hoveredElectorateNumber,
   selectedElectorateNumber,
   mapKind,
   electorateGroup,
+  mapDataMode,
+  isDetailedMap = false,
 }) {
   if (!rawMarkup || !electorateWinners) {
     return "";
@@ -236,10 +311,31 @@ function buildStyledSvgMarkup({
   const documentRoot = parser.parseFromString(cleanedMarkup, "image/svg+xml");
   const svgElement = documentRoot.documentElement;
   const byElectorateNumber = electorateWinners.by_electorate_number ?? {};
+  const detailsByElectorateNumber =
+    electorateDetails?.by_electorate_number ?? {};
+  const baselineDetailsByElectorateNumber =
+    baselineElectorateDetails?.by_electorate_number ?? {};
+  const mapDataOption = getMapDataOption(mapDataMode);
+  const mappedValues = Object.values(detailsByElectorateNumber).map((electorate) => {
+    const partyResult = getPartyVoteResult(electorate, mapDataOption.code);
+    return mapDataOption.kind === "party-change"
+      ? partyResult?.change
+      : partyResult?.vote_share;
+  }).filter(Number.isFinite);
+  const maximumShare = Math.max(...mappedValues, 1);
+  const maximumAbsoluteChange = Math.max(
+    ...mappedValues.map((value) => Math.abs(value)),
+    1,
+  );
   const bySvgId = electorateWinners.by_svg_id ?? {};
   const byNormalizedKey = new Map();
   const selectedStrokeWidth = getSelectedStrokeWidth(mapKind, electorateGroup);
-  const defaultStrokeColor = getDefaultStrokeColor(mapKind, electorateGroup);
+  const defaultStrokeColor = isDetailedMap
+    ? "#ffffff"
+    : getDefaultStrokeColor(mapKind, electorateGroup);
+  const selectedStrokeColor = isDetailedMap
+    ? "#ffffff"
+    : SELECTED_STROKE_COLOR;
   let hoveredLayer = null;
   let selectedLayer = null;
 
@@ -268,6 +364,9 @@ function buildStyledSvgMarkup({
       (seededElectorateNumber && byElectorateNumber[seededElectorateNumber]);
     const electorateNumber =
       mapEntry?.electorate_number ?? seededElectorateNumber ?? null;
+    const electorateDetailsEntry = electorateNumber
+      ? detailsByElectorateNumber[electorateNumber]
+      : null;
     const hasElectorateMatch = Boolean(electorateNumber);
     const isSelected =
       hasElectorateMatch && electorateNumber === selectedElectorateNumber;
@@ -276,9 +375,55 @@ function buildStyledSvgMarkup({
       electorateNumber === hoveredElectorateNumber &&
       electorateNumber !== selectedElectorateNumber;
     const isActive = isSelected || isHovered;
-    const baseFill =
-      PARTY_COLORS[mapEntry?.winner_party_code] ??
-      (mapEntry?.has_svg_match ? NEUTRAL_PARTY_COLOR : NEUTRAL_MAP_FILL);
+    const partyResult = getPartyVoteResult(
+      electorateDetailsEntry,
+      mapDataOption.code,
+    );
+    const baselineElectorate = electorateNumber
+      ? baselineDetailsByElectorateNumber[electorateNumber]
+      : null;
+    const currentWinnerCode = mapEntry?.winner_party_code
+      ?? electorateDetailsEntry?.winner_party_code;
+    const baselineWinnerCode = baselineElectorate?.electorate_name === "Port Waikato"
+      ? "16"
+      : baselineElectorate?.winner_party_code;
+    let baseFill = NEUTRAL_MAP_FILL;
+
+    if (mapDataOption.kind === "electorate-winner") {
+      baseFill = PARTY_COLORS[mapEntry?.winner_party_code]
+        ?? (mapEntry?.has_svg_match ? NEUTRAL_PARTY_COLOR : NEUTRAL_MAP_FILL);
+    } else if (mapDataOption.kind === "electorate-change") {
+      baseFill = currentWinnerCode && baselineWinnerCode
+        && currentWinnerCode !== baselineWinnerCode
+        ? PARTY_COLORS[currentWinnerCode] ?? NEUTRAL_PARTY_COLOR
+        : NEUTRAL_MAP_FILL;
+    } else if (mapDataOption.kind === "party-winner") {
+      baseFill = PARTY_COLORS[electorateDetailsEntry?.leading_party_vote_code]
+        ?? NEUTRAL_PARTY_COLOR;
+    } else if (mapDataOption.kind === "party-share" && Number.isFinite(partyResult?.vote_share)) {
+      const strength = clamp(partyResult.vote_share / maximumShare, 0, 1);
+      baseFill = mixColors(
+        MAP_NEUTRAL_GRADIENT_COLOR,
+        PARTY_COLORS[mapDataOption.code] ?? NEUTRAL_PARTY_COLOR,
+        0.08 + strength * 0.92,
+      );
+    } else if (mapDataOption.kind === "party-change" && Number.isFinite(partyResult?.change)) {
+      const strength = clamp(
+        Math.abs(partyResult.change) / maximumAbsoluteChange,
+        0,
+        1,
+      );
+      const directionColor = partyResult.change > 0
+        ? MAP_POSITIVE_COLOR
+        : partyResult.change < 0
+          ? MAP_NEGATIVE_COLOR
+          : MAP_NEUTRAL_GRADIENT_COLOR;
+      baseFill = mixColors(
+        MAP_NEUTRAL_GRADIENT_COLOR,
+        directionColor,
+        strength,
+      );
+    }
     const fill = isActive
       ? lightenColor(baseFill, SELECTED_FILL_LIGHTEN)
       : baseFill;
@@ -306,7 +451,7 @@ function buildStyledSvgMarkup({
       }
 
       if (isActive) {
-        nextStyle = styleWithRule(nextStyle, `stroke: ${SELECTED_STROKE_COLOR};`);
+        nextStyle = styleWithRule(nextStyle, `stroke: ${selectedStrokeColor};`);
         nextStyle = styleWithRule(
           nextStyle,
           `stroke-width: ${selectedStrokeWidth};`,
@@ -544,8 +689,13 @@ function buildMorphItems({
 export default function InteractiveMap({
   electorateWinners,
   electorateDetails,
+  baselineElectorateDetails,
   cartographicMapMarkup,
   hexMapMarkup,
+  aucklandMapMarkup,
+  christchurchMapMarkup,
+  hamiltonMapMarkup,
+  wellingtonMapMarkup,
   electorateGroup = GENERAL_ELECTORATES,
   selectedElectorateNumber,
   onSelectElectorate,
@@ -558,6 +708,8 @@ export default function InteractiveMap({
   const [hoveredElectorateNumber, setHoveredElectorateNumber] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [displayedViewMode, setDisplayedViewMode] = useState(viewMode);
+  const [mapDataMode, setMapDataMode] = useState("electorate-winner");
+  const [mapAreaMode, setMapAreaMode] = useState(NZ_WIDE_AREA);
   const [transitionState, setTransitionState] = useState(null);
   const [morphItems, setMorphItems] = useState([]);
   const [morphProgress, setMorphProgress] = useState(0);
@@ -577,36 +729,83 @@ export default function InteractiveMap({
   const frameRef = useRef(null);
   const transitionFrameRef = useRef(null);
   const hasAutoFittedRef = useRef(false);
-  const electorateDetailsLookup =
-    electorateDetails?.by_electorate_number ?? {};
+  const electorateDetailsLookup = useMemo(
+    () => electorateDetails?.by_electorate_number ?? {},
+    [electorateDetails],
+  );
+  const baselineElectorateDetailsLookup = useMemo(
+    () => baselineElectorateDetails?.by_electorate_number ?? {},
+    [baselineElectorateDetails],
+  );
+  const mapDataOption = getMapDataOption(mapDataMode);
+  const cityMapMarkups = useMemo(() => ({
+    auckland: aucklandMapMarkup,
+    christchurch: christchurchMapMarkup,
+    hamilton: hamiltonMapMarkup,
+    wellington: wellingtonMapMarkup,
+  }), [
+    aucklandMapMarkup,
+    christchurchMapMarkup,
+    hamiltonMapMarkup,
+    wellingtonMapMarkup,
+  ]);
+  const activeCartographicMapMarkup = electorateGroup === GENERAL_ELECTORATES
+    && mapAreaMode !== NZ_WIDE_AREA
+    ? cityMapMarkups[mapAreaMode] ?? cartographicMapMarkup
+    : cartographicMapMarkup;
+  const mapDataValues = useMemo(() => Object.values(electorateDetailsLookup)
+    .map((electorate) => {
+      const partyResult = getPartyVoteResult(electorate, mapDataOption.code);
+      return mapDataOption.kind === "party-change"
+        ? partyResult?.change
+        : partyResult?.vote_share;
+    })
+    .filter(Number.isFinite), [electorateDetailsLookup, mapDataOption]);
+  const mapDataMaximum = Math.max(...mapDataValues, 1);
+  const mapDataAbsoluteMaximum = Math.max(
+    ...mapDataValues.map((value) => Math.abs(value)),
+    1,
+  );
 
   const styledSvgMarkups = useMemo(() => {
     const resolvedHexMarkup = hexMapMarkup ?? cartographicMapMarkup;
 
     return {
       [CARTOGRAPHIC_VIEW]: buildStyledSvgMarkup({
-        rawMarkup: cartographicMapMarkup,
+        rawMarkup: activeCartographicMapMarkup,
         electorateWinners,
+        electorateDetails,
+        baselineElectorateDetails,
         hoveredElectorateNumber,
         selectedElectorateNumber,
         mapKind: CARTOGRAPHIC_VIEW,
         electorateGroup,
+        mapDataMode,
+        isDetailedMap: electorateGroup === GENERAL_ELECTORATES
+          && mapAreaMode !== NZ_WIDE_AREA,
       }),
       [HEX_VIEW]: buildStyledSvgMarkup({
         rawMarkup: resolvedHexMarkup,
         electorateWinners,
+        electorateDetails,
+        baselineElectorateDetails,
         hoveredElectorateNumber,
         selectedElectorateNumber,
         mapKind: HEX_VIEW,
         electorateGroup,
+        mapDataMode,
+        isDetailedMap: false,
       }),
     };
   }, [
-    cartographicMapMarkup,
+    activeCartographicMapMarkup,
     electorateGroup,
+    electorateDetails,
+    baselineElectorateDetails,
     electorateWinners,
     hexMapMarkup,
     hoveredElectorateNumber,
+    mapDataMode,
     selectedElectorateNumber,
   ]);
 
@@ -675,7 +874,9 @@ export default function InteractiveMap({
     scheduleTransform();
 
     const cachedView = modeViewCacheRef.current[displayedViewMode];
-    const effectiveSavedView = cachedView ?? savedView;
+    const effectiveSavedView = mapAreaMode === NZ_WIDE_AREA
+      ? cachedView ?? savedView
+      : cachedView;
 
     if (effectiveSavedView) {
       viewRef.current = { ...effectiveSavedView };
@@ -704,7 +905,13 @@ export default function InteractiveMap({
       }
       delete canvas.__scheduleTransform;
     };
-  }, [baseSvgMarkup, displayedViewMode, savedView]);
+  }, [baseSvgMarkup, displayedViewMode, mapAreaMode, savedView]);
+
+  useEffect(() => {
+    if (electorateGroup !== GENERAL_ELECTORATES && mapAreaMode !== NZ_WIDE_AREA) {
+      setMapAreaMode(NZ_WIDE_AREA);
+    }
+  }, [electorateGroup, mapAreaMode]);
 
   useEffect(() => {
     if (
@@ -802,6 +1009,9 @@ export default function InteractiveMap({
   const hoveredElectorate = hoveredElectorateNumber
     ? electorateDetailsLookup[hoveredElectorateNumber] ?? null
     : null;
+  const hoveredBaselineElectorate = hoveredElectorateNumber
+    ? baselineElectorateDetailsLookup[hoveredElectorateNumber] ?? null
+    : null;
   const hoveredCandidateResults = hoveredElectorate?.candidate_results ?? [];
   const sortedHoveredCandidates = [...hoveredCandidateResults].sort(
     (left, right) => (right?.votes ?? 0) - (left?.votes ?? 0),
@@ -822,6 +1032,29 @@ export default function InteractiveMap({
       || hoveredElectorate?.winner_party_name
       || "Independent",
   );
+  const hoveredBaselineWinnerCode = hoveredBaselineElectorate?.electorate_name === "Port Waikato"
+    ? "16"
+    : hoveredBaselineElectorate?.winner_party_code;
+  const hoveredCurrentWinnerCode = hoveredLeader?.party_code
+    ?? hoveredElectorate?.winner_party_code;
+  const hoveredSeatChanged = Boolean(
+    hoveredCurrentWinnerCode
+      && hoveredBaselineWinnerCode
+      && hoveredCurrentWinnerCode !== hoveredBaselineWinnerCode,
+  );
+  const hoveredBaselineWinnerName = hoveredBaselineElectorate?.electorate_name === "Port Waikato"
+    ? "National"
+    : formatPartyDisplayLabel(
+      hoveredBaselineElectorate?.winner_party_short_name,
+      hoveredBaselineElectorate?.winner_party_name || "Unknown",
+    );
+  const hoveredPartyVoteResult = getPartyVoteResult(
+    hoveredElectorate,
+    mapDataOption.code,
+  );
+  const hoveredPartyVoteWinner = hoveredElectorate?.party_vote_results?.find(
+    (party) => party.party_code === hoveredElectorate.leading_party_vote_code,
+  ) ?? null;
 
   function scheduleTransform() {
     const canvas = canvasRef.current;
@@ -1152,55 +1385,114 @@ export default function InteractiveMap({
     setIsDragging(false);
   }
 
+  function handleMapAreaChange(event) {
+    const nextArea = event.target.value;
+    modeViewCacheRef.current[CARTOGRAPHIC_VIEW] = null;
+    setMapAreaMode(nextArea);
+    setHoveredElectorateNumber(null);
+
+    if (nextArea !== NZ_WIDE_AREA && viewMode !== CARTOGRAPHIC_VIEW) {
+      onViewModeChange?.(CARTOGRAPHIC_VIEW);
+    }
+  }
+
   return (
     <div className="map-panel">
       <div className="map-panel__controls">
-        <div className="map-panel__view-toggle" role="tablist" aria-label="Map view">
-          <button
-            type="button"
-            className={`map-panel__button${viewMode === CARTOGRAPHIC_VIEW ? " is-active" : ""}`}
-            onClick={() => onViewModeChange?.(CARTOGRAPHIC_VIEW)}
-            disabled={isTransitioning}
-          >
-            Cartographic view
-          </button>
-          <button
-            type="button"
-            className={`map-panel__button${viewMode === HEX_VIEW ? " is-active" : ""}`}
-            onClick={() => onViewModeChange?.(HEX_VIEW)}
-            disabled={isTransitioning}
-          >
-            Hex view
-          </button>
+        <div className="map-panel__control-group">
+          <span className="map-panel__control-label">Map View</span>
+          <div className="map-panel__view-toggle" role="tablist" aria-label="Map view">
+            <button
+              type="button"
+              className={`map-panel__button${viewMode === CARTOGRAPHIC_VIEW ? " is-active" : ""}`}
+              onClick={() => onViewModeChange?.(CARTOGRAPHIC_VIEW)}
+              disabled={isTransitioning}
+            >
+              Cartographic view
+            </button>
+            {mapAreaMode === NZ_WIDE_AREA && (
+              <button
+                type="button"
+                className={`map-panel__button${viewMode === HEX_VIEW ? " is-active" : ""}`}
+                onClick={() => onViewModeChange?.(HEX_VIEW)}
+                disabled={isTransitioning}
+              >
+                Hex view
+              </button>
+            )}
+          </div>
+        </div>
+        {electorateGroup === GENERAL_ELECTORATES && (
+          <label className="map-panel__area-control">
+              <span className="map-panel__control-label">Area</span>
+              <select
+                className="map-panel__area-select"
+                value={mapAreaMode}
+                onChange={handleMapAreaChange}
+                disabled={isTransitioning}
+              >
+                {GENERAL_MAP_AREAS.map((area) => (
+                  <option key={area.value} value={area.value}>
+                    {area.label}
+                  </option>
+                ))}
+              </select>
+          </label>
+        )}
+        <div className="map-panel__control-group map-panel__zoom-group">
+          <span className="map-panel__control-label">Zoom</span>
+          <div className="map-panel__zoom-controls">
+            <button
+              type="button"
+              className="map-panel__button"
+              onClick={zoomIn}
+              disabled={isTransitioning}
+            >
+              +
+            </button>
+            <button
+              type="button"
+              className="map-panel__button"
+              onClick={zoomOut}
+              disabled={isTransitioning}
+            >
+              -
+            </button>
+            <button
+              type="button"
+              className="map-panel__button"
+              onClick={resetView}
+              disabled={isTransitioning}
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="map-panel__controls">
-        <button
-          type="button"
-          className="map-panel__button"
-          onClick={zoomIn}
-          disabled={isTransitioning}
-        >
-          +
-        </button>
-        <button
-          type="button"
-          className="map-panel__button"
-          onClick={zoomOut}
-          disabled={isTransitioning}
-        >
-          -
-        </button>
-        <button
-          type="button"
-          className="map-panel__button"
-          onClick={resetView}
-          disabled={isTransitioning}
-        >
-          Reset
-        </button>
-      </div>
+      {(mapDataOption.kind === "party-share" || mapDataOption.kind === "party-change") && (
+        <div className="map-panel__legend" aria-label={`${mapDataOption.label} colour scale`}>
+          <span>
+            {mapDataOption.kind === "party-change"
+              ? `−${mapDataAbsoluteMaximum.toFixed(1)}pp`
+              : "0%"}
+          </span>
+          <span
+            className="map-panel__legend-gradient"
+            style={{
+              background: mapDataOption.kind === "party-change"
+                ? `linear-gradient(90deg, ${MAP_NEGATIVE_COLOR}, ${MAP_NEUTRAL_GRADIENT_COLOR}, ${MAP_POSITIVE_COLOR})`
+                : `linear-gradient(90deg, ${MAP_NEUTRAL_GRADIENT_COLOR}, ${PARTY_COLORS[mapDataOption.code] ?? NEUTRAL_PARTY_COLOR})`,
+            }}
+            aria-hidden="true"
+          />
+          <span>
+            {mapDataOption.kind === "party-change"
+              ? `+${mapDataAbsoluteMaximum.toFixed(1)}pp`
+              : `${mapDataMaximum.toFixed(1)}%`}
+          </span>
+        </div>
+      )}
 
       <div
         className={`map-panel__viewport${isDragging ? " is-dragging" : ""}`}
@@ -1213,6 +1505,26 @@ export default function InteractiveMap({
         onPointerLeave={handleMapPointerLeave}
         onWheel={handleWheel}
       >
+        <label
+          className="map-panel__data-select map-panel__data-select--overlay"
+          onPointerDown={(event) => event.stopPropagation()}
+          onWheel={(event) => event.stopPropagation()}
+        >
+          <span>Map shows</span>
+          <select
+            value={mapDataMode}
+            onChange={(event) => {
+              setMapDataMode(event.target.value);
+              setHoveredElectorateNumber(null);
+            }}
+          >
+            {MAP_DATA_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
         {baseSvgMarkup ? (
           <>
             <div className="map-panel__canvas" ref={canvasRef}>
@@ -1275,16 +1587,74 @@ export default function InteractiveMap({
                   {hoveredElectorate.electorate_name}
                 </p>
                 <p className="map-panel__tooltip-body">
-                  <span
-                    className="map-panel__tooltip-party-dot"
-                    style={{ backgroundColor: hoveredLeaderPartyColor }}
-                    aria-hidden="true"
-                  />
-                  <span>{hoveredLeaderPartyName}</span>
-                  <span className="map-panel__tooltip-separator">·</span>
-                  <span>
-                    Majority {hoveredMajority?.toLocaleString() ?? "0"}
-                  </span>
+                  {mapDataOption.kind === "electorate-winner" && (
+                    <>
+                      <span
+                        className="map-panel__tooltip-party-dot"
+                        style={{ backgroundColor: hoveredLeaderPartyColor }}
+                        aria-hidden="true"
+                      />
+                      <span>{hoveredLeaderPartyName}</span>
+                      <span className="map-panel__tooltip-separator">·</span>
+                      <span>Majority {hoveredMajority?.toLocaleString() ?? "0"}</span>
+                    </>
+                  )}
+                  {mapDataOption.kind === "electorate-change" && (
+                    hoveredSeatChanged ? (
+                      <>
+                        <span
+                          className="map-panel__tooltip-party-dot"
+                          style={{ backgroundColor: hoveredLeaderPartyColor }}
+                          aria-hidden="true"
+                        />
+                        <span>{hoveredLeaderPartyName} gain</span>
+                        <span className="map-panel__tooltip-separator">from</span>
+                        <span>{hoveredBaselineWinnerName}</span>
+                      </>
+                    ) : (
+                      <span>No change · {hoveredLeaderPartyName} held</span>
+                    )
+                  )}
+                  {mapDataOption.kind === "party-winner" && (
+                    <>
+                      <span
+                        className="map-panel__tooltip-party-dot"
+                        style={{
+                          backgroundColor: PARTY_COLORS[hoveredPartyVoteWinner?.party_code]
+                            ?? NEUTRAL_PARTY_COLOR,
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span>{formatPartyDisplayLabel(
+                        hoveredPartyVoteWinner?.party_short_name,
+                        hoveredPartyVoteWinner?.party_name,
+                      )}</span>
+                      <span className="map-panel__tooltip-separator">·</span>
+                      <span>{hoveredPartyVoteWinner?.vote_share?.toFixed(1) ?? "0.0"}%</span>
+                    </>
+                  )}
+                  {mapDataOption.kind === "party-share" && (
+                    <>
+                      <span>{mapDataOption.label}</span>
+                      <span className="map-panel__tooltip-separator">·</span>
+                      <span>{hoveredPartyVoteResult?.vote_share?.toFixed(1) ?? "—"}%</span>
+                    </>
+                  )}
+                  {mapDataOption.kind === "party-change" && (
+                    <>
+                      <span>{mapDataOption.label}</span>
+                      <span className="map-panel__tooltip-separator">·</span>
+                      <span style={{ color: hoveredPartyVoteResult?.change > 0
+                        ? MAP_POSITIVE_COLOR
+                        : hoveredPartyVoteResult?.change < 0
+                          ? MAP_NEGATIVE_COLOR
+                          : "#666666" }}>
+                        {Number.isFinite(hoveredPartyVoteResult?.change)
+                          ? `${hoveredPartyVoteResult.change > 0 ? "+" : ""}${hoveredPartyVoteResult.change.toFixed(1)}pp`
+                          : "—"}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
             )}
