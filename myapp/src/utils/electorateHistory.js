@@ -1,5 +1,5 @@
-import electorateVoteHistoryCsv from "../../../electorate_vote_history.csv?raw";
-import partyVoteHistoryCsv from "../../../party_vote_history.csv?raw";
+import electorateVoteHistoryCsv from "../data/electorate_vote_history.csv?raw";
+import partyVoteHistoryCsv from "../data/party_vote_history.csv?raw";
 
 function parseCsv(text) {
   const rows = [];
