@@ -1,7 +1,7 @@
 import { XMLValidator } from "fast-xml-parser";
 import mapSvg from "../../nzmap.svg";
-import electorateNotionalsCsv from "../../electorate_full_notionals.csv";
-import partyNotionalsCsv from "../../partyvote_notionals_full.csv";
+import electorateNotionalsCsv from "../../polling_place_split_final_notional_2026_electorate_vote_all_parties.csv";
+import partyNotionalsCsv from "../../polling_place_split_final_notional_2026_list_vote_all_parties.csv";
 import { buildPartyVoteSnapshot, convertElectionData } from "./converter.js";
 
 const CORE_FILES = ["candidates.xml", "electorates.xml", "parties.xml"];
@@ -107,15 +107,18 @@ async function publishResults(env) {
   const current = await readJson(env.RESULTS_BUCKET, "latest.json");
   const electionXml = await download(env.ELECTION_XML_BASE_URL, "election.xml");
   const electionHash = await sha256(electionXml);
-  if (current?.electionHash === electionHash) {
+  const conversionHash = await sha256(JSON.stringify([
+    "2023-baselines-v2", mapSvg, electorateNotionalsCsv, partyNotionalsCsv,
+  ]));
+  if (current?.electionHash === electionHash && current?.conversionHash === conversionHash) {
     console.log(`No Elections NZ changes; current version is ${current.version}`);
     return current;
   }
 
   const { files, source } = await downloadSource(env.ELECTION_XML_BASE_URL, electionXml);
-  const hash = await sourceHash(files);
+  const hash = await sha256(`${await sourceHash(files)}\0${conversionHash}`);
   if (current?.sourceHash === hash) {
-    const updatedCurrent = { ...current, electionHash };
+    const updatedCurrent = { ...current, electionHash, conversionHash };
     await env.RESULTS_BUCKET.put("latest.json", JSON.stringify(updatedCurrent), {
       httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
     });
@@ -160,6 +163,7 @@ async function publishResults(env) {
     sourceUpdatedAt,
     sourceHash: hash,
     electionHash,
+    conversionHash,
     publishedAt: new Date().toISOString(),
     publisher: "cloudflare",
     files: Object.fromEntries(Object.entries(outputs).map(([name, [key]]) => [name, key])),

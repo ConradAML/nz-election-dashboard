@@ -110,8 +110,8 @@ async function readSource(xmlDir) {
     partiesXml: await readFile(path.join(xmlDir, "parties.xml"), "utf8"),
     electorateXmlByNumber,
     mapSvg: await readFile(path.join(REPOSITORY_ROOT, "nzmap.svg"), "utf8"),
-    electorateNotionalsCsv: await readFile(path.join(REPOSITORY_ROOT, "electorate_full_notionals.csv"), "utf8"),
-    partyNotionalsCsv: await readFile(path.join(REPOSITORY_ROOT, "partyvote_notionals_full.csv"), "utf8"),
+    electorateNotionalsCsv: await readFile(path.join(REPOSITORY_ROOT, "polling_place_split_final_notional_2026_electorate_vote_all_parties.csv"), "utf8"),
+    partyNotionalsCsv: await readFile(path.join(REPOSITORY_ROOT, "polling_place_split_final_notional_2026_list_vote_all_parties.csv"), "utf8"),
   };
 }
 

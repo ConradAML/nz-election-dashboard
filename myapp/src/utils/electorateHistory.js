@@ -87,7 +87,7 @@ export function build2023ElectorateBaseline(currentDetails, preservedDetails) {
           ...preserved,
           electorate_number: number,
           electorate_name: electorate.electorate_name,
-          winner_party_code: codes[winner] ?? preserved?.winner_party_code,
+          winner_party_code: winner === "—" ? null : codes[winner] ?? preserved?.winner_party_code,
           winner_party_short_name: winner ?? preserved?.winner_party_short_name,
           winner_party_name: winner ?? preserved?.winner_party_name,
         }];

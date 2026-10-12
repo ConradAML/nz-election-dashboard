@@ -384,9 +384,7 @@ function buildStyledSvgMarkup({
       : null;
     const currentWinnerCode = mapEntry?.winner_party_code
       ?? electorateDetailsEntry?.winner_party_code;
-    const baselineWinnerCode = baselineElectorate?.electorate_name === "Port Waikato"
-      ? "16"
-      : baselineElectorate?.winner_party_code;
+    const baselineWinnerCode = baselineElectorate?.winner_party_code;
     let baseFill = NEUTRAL_MAP_FILL;
 
     if (mapDataOption.kind === "electorate-winner") {

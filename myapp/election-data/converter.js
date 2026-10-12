@@ -389,7 +389,7 @@ function buildElectorateDetails(source, lookups, svgIds) {
         candidate.party_code === "0",
       );
       candidate.previous_vote_share = previousShare === null ? null : round(previousShare);
-      candidate.change = previousShare === null ? null : round(candidate.vote_share - previousShare);
+      candidate.change = previousShare === null ? null : round(candidate.vote_share - candidate.previous_vote_share);
     }
 
     for (const party of partyVoteResults) {
@@ -399,7 +399,7 @@ function buildElectorateDetails(source, lookups, svgIds) {
       const previousVotes = findNotionalShare(partyPrevious.votes ?? {}, meta);
       party.previous_votes = previousVotes === null ? null : round(previousVotes, 4);
       party.previous_vote_share = previousShare === null ? null : round(previousShare);
-      party.change = previousShare === null ? null : round(party.vote_share - previousShare);
+      party.change = previousShare === null ? null : round(party.vote_share - party.previous_vote_share);
     }
 
     const [winnerPartyCode, winnerPartyVotes] = maximumCount(candidatePartyCounts);
