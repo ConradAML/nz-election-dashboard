@@ -8,6 +8,7 @@
     "dev:live": "VITE_DATA_SOURCE=live vite",
     "dev:simulated": "VITE_DATA_SOURCE=simulated vite",
     "build": "vite build",
+    "website:deploy": "node deploy-website.js",
     "build:simulated": "VITE_DATA_SOURCE=simulated vite build",
     "data:update": "node election-data/update-election-data.js",
     "data:convert": "node election-data/update-election-data.js --skip-fetch",

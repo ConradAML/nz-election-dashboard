@@ -85,6 +85,12 @@ the endpoint is unavailable without that secret.
 
 ## Front-end development
 
+For the Cloudflare website build, use `cd myapp && npm install && npm run build`
+as the build command and `cd myapp && npm run website:deploy` as the deploy
+command. This uploads and activates a version with a unique tag on every run,
+without reapplying the existing website address settings. The results updater
+continues to use the separate `worker:deploy` command.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
