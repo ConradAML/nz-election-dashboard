@@ -4,6 +4,7 @@ import {
   PARTY_COLORS,
 } from "../constants/partyColors";
 import { formatPartyDisplayLabel } from "../utils/partyDisplay";
+import { getElectorateHistory } from "../utils/electorateHistory";
 
 const TRANSITION_DURATION_MS = 320;
 
@@ -37,6 +38,18 @@ function lerp(start, end, progress) {
 
 function partyColor(partyCode) {
   return PARTY_COLORS[partyCode] ?? NEUTRAL_PARTY_COLOR;
+}
+
+const HISTORY_PARTY_CODES = {
+  ACT: "5",
+  Green: "10",
+  Labour: "13",
+  "Te Pāti Māori": "14",
+  National: "16",
+};
+
+function historyPartyColor(partyName) {
+  return partyColor(HISTORY_PARTY_CODES[partyName]);
 }
 
 function textColorForBackground(hexColor) {
@@ -234,6 +247,10 @@ export default function ElectorateDetailPanel({
   }
 
   const isElectorateTab = activeTab === "electorate";
+  const voteHistory = getElectorateHistory(
+    electorate.electorate_name,
+    isElectorateTab ? "electorate" : "party",
+  );
   const electorateChangeAvailable = electorate.electorate_name !== "Port Waikato";
   const changeAvailable = !isElectorateTab || electorateChangeAvailable;
   const displayedResultMode = changeAvailable ? resultMode : "share";
@@ -365,6 +382,36 @@ export default function ElectorateDetailPanel({
           </p>
           <p className="electorate-panel__majority-subvalue">{majoritySecondary}</p>
         </div>
+      )}
+
+      {voteHistory && (
+        <section className="electorate-panel__history" aria-label={`${heading} history`}>
+          <h3>{heading} history</h3>
+          <div className="electorate-panel__history-grid">
+            {voteHistory.results.map(({ year, party }) => {
+              const color = historyPartyColor(party);
+              return (
+                <div className="electorate-panel__history-item" key={year}>
+                  <span className="electorate-panel__history-year">{year}</span>
+                  <span
+                    className="electorate-panel__history-party"
+                    style={{
+                      background: color,
+                      color: textColorForBackground(color),
+                    }}
+                  >
+                    {party}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {voteHistory.otherNames && (
+            <p className="electorate-panel__history-note">
+              Previously: {voteHistory.otherNames}
+            </p>
+          )}
+        </section>
       )}
 
       <p className="electorate-panel__summary">

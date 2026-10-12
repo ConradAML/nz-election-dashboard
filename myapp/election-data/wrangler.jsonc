@@ -1,0 +1,30 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "nz-election-results-updater",
+  "main": "cloudflare-worker.js",
+  "compatibility_date": "2026-09-14",
+  "workers_dev": true,
+  "vars": {
+    "ELECTION_XML_BASE_URL": "https://media.election.net.nz/electionresults_2023/xml/",
+    "ELECTION_YEAR": "2023"
+  },
+  "r2_buckets": [
+    {
+      "binding": "RESULTS_BUCKET",
+      "bucket_name": "nz-election-results"
+    }
+  ],
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "rules": [
+    {
+      "type": "Text",
+      "globs": ["**/*.svg", "**/*.csv"],
+      "fallthrough": true
+    }
+  ]
+}

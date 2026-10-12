@@ -304,7 +304,7 @@ export default function VerticalBarChart({
                   y={animatedY}
                   width={barWidth}
                   height={animatedHeight}
-                  rx="8"
+                  rx="0"
                   fill={item.color}
                   style={{ cursor: "pointer" }}
                   onMouseEnter={(event) => {

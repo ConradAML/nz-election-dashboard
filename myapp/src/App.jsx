@@ -677,6 +677,7 @@ export default function App() {
     isLoading,
     error,
     lastSuccessfulAt,
+    updaterStatus,
     refreshIntervalMs,
     isSimulatedData,
   } = useDashboardData();
@@ -816,7 +817,11 @@ export default function App() {
     ? "Simulated dataset loaded"
     : error
       ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
-      : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
+      : updaterStatus?.status === "error"
+        ? "Latest results check failed; showing saved results"
+        : updaterStatus?.lastCompletedAt
+          ? `Results checked at ${formatRefreshTime(updaterStatus.lastCompletedAt)} · Checking every minute`
+          : `Live updating every ${Math.round(refreshIntervalMs / 1000)} seconds`;
   const lastNewVotesTimestamp = findLastNewVotesTimestamp(partyVoteSnapshots);
 
   if (isLoading && !results) {

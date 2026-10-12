@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  RESULTS_BASE_URL,
   resolveDashboardDataFile,
   USE_SIMULATED_DATA,
 } from "../constants/dataSource";
@@ -12,9 +13,16 @@ function buildAssetUrl(fileName) {
   return `${normalizedBaseUrl}${fileName}`;
 }
 
+function buildLiveDataUrl(fileName) {
+  if (!USE_SIMULATED_DATA) {
+    return `${RESULTS_BASE_URL}/${fileName}`;
+  }
+  return buildAssetUrl(resolveDashboardDataFile(fileName));
+}
+
 async function fetchJson(fileName, signal) {
   const response = await fetch(
-    buildAssetUrl(resolveDashboardDataFile(fileName)),
+    buildLiveDataUrl(fileName),
     { signal, cache: "no-store" },
   );
 
@@ -86,11 +94,15 @@ export default function useDashboardData() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastSuccessfulAt, setLastSuccessfulAt] = useState(null);
+  const [updaterStatus, setUpdaterStatus] = useState(null);
 
   useEffect(() => {
     let isActive = true;
 
     async function loadDashboardData(signal) {
+      const statusPromise = !USE_SIMULATED_DATA
+        ? fetchJson("status", signal).catch(() => null)
+        : Promise.resolve(null);
       const [
         results,
         voteCount,
@@ -126,6 +138,7 @@ export default function useDashboardData() {
         fetchStaticText("hamilton.svg", signal),
         fetchStaticText("wellington.svg", signal),
       ]);
+      const status = await statusPromise;
 
       if (!isActive) {
         return;
@@ -150,6 +163,7 @@ export default function useDashboardData() {
         wellingtonMapMarkup,
       });
       setLastSuccessfulAt(Date.now());
+      setUpdaterStatus(status?.updater ?? null);
       setError(null);
       setIsLoading(false);
     }
@@ -188,6 +202,7 @@ export default function useDashboardData() {
     isLoading,
     error,
     lastSuccessfulAt,
+    updaterStatus,
     refreshIntervalMs: REFRESH_INTERVAL_MS,
     isSimulatedData: USE_SIMULATED_DATA,
   };
