@@ -71,3 +71,26 @@ export function getElectorateHistory(electorateName, voteType) {
   const history = voteType === "electorate" ? electorateVoteHistory : partyVoteHistory;
   return history.get(electorateName) ?? null;
 }
+
+// Match by name: electorate numbers can change when boundaries are redrawn.
+export function build2023ElectorateBaseline(currentDetails, preservedDetails) {
+  const codes = { National: "16", Labour: "13", Green: "10", ACT: "5", "Te Pāti Māori": "14" };
+  const preservedByName = new Map(Object.values(preservedDetails?.by_electorate_number ?? {})
+    .map((electorate) => [electorate.electorate_name, electorate]));
+  return {
+    by_electorate_number: Object.fromEntries(Object.entries(currentDetails?.by_electorate_number ?? {})
+      .map(([number, electorate]) => {
+        const winner = getElectorateHistory(electorate.electorate_name, "electorate")?.results
+          .find((result) => result.year === "2023")?.party;
+        const preserved = preservedByName.get(electorate.electorate_name);
+        return [number, {
+          ...preserved,
+          electorate_number: number,
+          electorate_name: electorate.electorate_name,
+          winner_party_code: codes[winner] ?? preserved?.winner_party_code,
+          winner_party_short_name: winner ?? preserved?.winner_party_short_name,
+          winner_party_name: winner ?? preserved?.winner_party_name,
+        }];
+      })),
+  };
+}

@@ -5,6 +5,11 @@ simulated 2026 dataset remains available for local UI testing.
 
 ## Data modes
 
+All election-change comparisons use 2023 in both live and simulated modes.
+National vote and seat charts use the 2023 results; electorate and regional vote
+changes use the supplied 2023 notional results for the current boundaries. Map
+seat changes use the 2023 notional winners, matched by electorate name.
+
 ```sh
 # Elections NZ data (the default)
 npm run dev:live

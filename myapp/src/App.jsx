@@ -12,6 +12,7 @@ import VoteProgressionChart from "./components/VoteProgressionChart";
 import useIsMobile from "./hooks/useIsMobile";
 import useDashboardData from "./hooks/useDashboardData";
 import { PARTY_COLORS } from "./constants/partyColors";
+import { build2023ElectorateBaseline } from "./utils/electorateHistory";
 import {
   formatMainChartPartyLabel,
   formatPartyDisplayLabel,
@@ -60,50 +61,36 @@ const PARTY_CONFIG = [
   {
     label: "National",
     code: "16",
-    previousVote: 25.6,
-    previousSeats: 33,
     color: PARTY_COLORS["16"],
   },
   {
     label: "Labour",
     code: "13",
-    previousVote: 50.0,
-    previousSeats: 65,
     color: PARTY_COLORS["13"],
   },
   {
     label: "Green",
     code: "10",
-    previousVote: 7.9,
-    previousSeats: 10,
     color: PARTY_COLORS["10"],
   },
   {
     label: "ACT",
     code: "5",
-    previousVote: 7.6,
-    previousSeats: 10,
     color: PARTY_COLORS["5"],
   },
   {
     label: "NZ First",
     code: "17",
-    previousVote: 2.6,
-    previousSeats: 0,
     color: PARTY_COLORS["17"],
   },
   {
     label: "Māori",
     code: "14",
-    previousVote: 1.2,
-    previousSeats: 2,
     color: PARTY_COLORS["14"],
   },
   {
     label: "Opportunity",
     code: "24",
-    previousVote: 1.5,
-    previousSeats: 0,
     color: PARTY_COLORS["24"],
   },
 ];
@@ -111,8 +98,6 @@ const PARTY_CONFIG = [
 //Other parties configuration
 const OTHER_PARTY = {
   label: "Other",
-  previousVote: 3.6,
-  previousSeats: 0,
   color: "#454545",
 };
 
@@ -135,7 +120,9 @@ const RESULTS_2023_BY_PARTY_CODE = {
   "55": { vote: 0.07, seats: 0 },
   "56": { vote: 0.08, seats: 0 },
 };
-const OTHER_PARTY_VOTE_2023 = 3.38;
+const OTHER_PARTY_VOTE_2023 = Object.entries(RESULTS_2023_BY_PARTY_CODE)
+  .filter(([code]) => !PARTY_CONFIG.some((party) => party.code === code))
+  .reduce((sum, [, result]) => sum + result.vote, 0);
 
 //Sets the order for the parties on the seat chart
 const SEAT_CHART_ORDER = [
@@ -514,7 +501,7 @@ function filterElectorateDataByGroup(data, electorateGroup) {
 }
 
 //Builds the party vote data for the chart
-function buildPartyVoteData(rows, use2023Baseline = false) {
+function buildPartyVoteData(rows) {
   const lookup = buildResultsLookup(rows);
   const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
 
@@ -527,9 +514,7 @@ function buildPartyVoteData(rows, use2023Baseline = false) {
       label: party.label,
       value,
       change: value - (
-        use2023Baseline
-          ? RESULTS_2023_BY_PARTY_CODE[party.code]?.vote ?? 0
-          : party.previousVote
+        RESULTS_2023_BY_PARTY_CODE[party.code]?.vote ?? 0
       ),
       color: party.color,
     };
@@ -545,9 +530,7 @@ function buildPartyVoteData(rows, use2023Baseline = false) {
         partyCode: row.p_no,
         value,
         change: roundToOneDecimal(
-          value - (use2023Baseline
-            ? RESULTS_2023_BY_PARTY_CODE[row.p_no]?.vote ?? 0
-            : 0),
+          value - (RESULTS_2023_BY_PARTY_CODE[row.p_no]?.vote ?? 0),
         ),
         color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
         totalSeats: toSeatNumber(row.total_seats),
@@ -563,14 +546,16 @@ function buildPartyVoteData(rows, use2023Baseline = false) {
     0,
   );
   const otherVoteShare = Math.max(totalVoteShare - includedVoteShare, 0);
+  const otherPreviousVoteShare = Math.max(OTHER_PARTY_VOTE_2023 - seatWinningExtraParties.reduce(
+    (sum, party) => sum + (RESULTS_2023_BY_PARTY_CODE[party.partyCode]?.vote ?? 0),
+    0,
+  ), 0);
 
   const otherParty = {
     label: OTHER_PARTY.label,
     value: roundToOneDecimal(otherVoteShare),
     change: roundToOneDecimal(
-      otherVoteShare - (
-        use2023Baseline ? OTHER_PARTY_VOTE_2023 : OTHER_PARTY.previousVote
-      ),
+      otherVoteShare - otherPreviousVoteShare,
     ),
     color: OTHER_PARTY.color,
   };
@@ -581,10 +566,7 @@ function buildPartyVoteData(rows, use2023Baseline = false) {
   );
 }
 
-function buildAllPartyVoteData(rows, use2023Baseline = false) {
-  const previousVoteLookup = new Map(
-    PARTY_CONFIG.map((party) => [party.code, party.previousVote]),
-  );
+function buildAllPartyVoteData(rows) {
   const trackedLabelLookup = new Map(
     PARTY_CONFIG.map((party) => [party.code, party.label]),
   );
@@ -592,9 +574,7 @@ function buildAllPartyVoteData(rows, use2023Baseline = false) {
   return [...rows]
     .map((row) => {
       const value = toNumber(row.percent_votes);
-      const previousVote = use2023Baseline
-        ? RESULTS_2023_BY_PARTY_CODE[row.p_no]?.vote ?? 0
-        : previousVoteLookup.get(row.p_no) ?? 0;
+      const previousVote = RESULTS_2023_BY_PARTY_CODE[row.p_no]?.vote ?? 0;
 
       return {
         label:
@@ -611,7 +591,7 @@ function buildAllPartyVoteData(rows, use2023Baseline = false) {
 }
 
 //Builds the seat count data for the chart
-function buildSeatData(rows, use2023Baseline = false) {
+function buildSeatData(rows) {
   const lookup = buildResultsLookup(rows);
   const trackedPartyCodes = new Set(PARTY_CONFIG.map((party) => party.code));
   const seatLookup = new Map(
@@ -625,9 +605,7 @@ function buildSeatData(rows, use2023Baseline = false) {
           label: party.label,
           value,
           change: value - (
-            use2023Baseline
-              ? RESULTS_2023_BY_PARTY_CODE[party.code]?.seats ?? 0
-              : party.previousSeats
+            RESULTS_2023_BY_PARTY_CODE[party.code]?.seats ?? 0
           ),
           color: party.color,
         },
@@ -642,9 +620,7 @@ function buildSeatData(rows, use2023Baseline = false) {
       label: formatPartyDisplayLabel(row.short_name, row.party_name),
       value: toSeatNumber(row.total_seats),
       change: toSeatNumber(row.total_seats) - (
-        use2023Baseline
-          ? RESULTS_2023_BY_PARTY_CODE[row.p_no]?.seats ?? 0
-          : 0
+        RESULTS_2023_BY_PARTY_CODE[row.p_no]?.seats ?? 0
       ),
       color: PARTY_COLORS[row.p_no] ?? fallbackSeatColor(row.p_no),
     }))
@@ -711,7 +687,7 @@ export default function App() {
     electorateGroup,
   );
   const filteredBaselineElectorateDetails = filterElectorateDataByGroup(
-    baselineElectorateDetails,
+    build2023ElectorateBaseline(electorateDetails, baselineElectorateDetails),
     electorateGroup,
   );
   const filteredElectorateWinners = filterElectorateDataByGroup(
@@ -727,9 +703,9 @@ export default function App() {
   const selectedElectorate = selectedElectorateNumber
     ? electorateLookup[selectedElectorateNumber] ?? null
     : null;
-  const partyVoteData = buildPartyVoteData(results ?? [], isSimulatedData);
-  const allPartyVoteData = buildAllPartyVoteData(results ?? [], isSimulatedData);
-  const seatData = buildSeatData(results ?? [], isSimulatedData);
+  const partyVoteData = buildPartyVoteData(results ?? []);
+  const allPartyVoteData = buildAllPartyVoteData(results ?? []);
+  const seatData = buildSeatData(results ?? []);
   const regionalPartyVoteData = buildRegionalPartyVoteData(
     electorateDetails,
     electorateRegionsCsv,
