@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  RESULTS_BASE_URL,
   resolveDashboardDataFile,
   USE_SIMULATED_DATA,
 } from "../constants/dataSource";
@@ -14,8 +13,9 @@ function buildAssetUrl(fileName) {
 }
 
 function buildLiveDataUrl(fileName) {
-  if (!USE_SIMULATED_DATA) {
-    return `${RESULTS_BASE_URL}/${fileName}`;
+  const resultsBaseUrl = import.meta.env.VITE_RESULTS_BASE_URL?.trim();
+  if (!USE_SIMULATED_DATA && resultsBaseUrl) {
+    return `${resultsBaseUrl.replace(/\/$/, "")}/${fileName}`;
   }
   return buildAssetUrl(resolveDashboardDataFile(fileName));
 }
@@ -100,7 +100,7 @@ export default function useDashboardData() {
     let isActive = true;
 
     async function loadDashboardData(signal) {
-      const statusPromise = !USE_SIMULATED_DATA
+      const statusPromise = !USE_SIMULATED_DATA && import.meta.env.VITE_RESULTS_BASE_URL?.trim()
         ? fetchJson("status", signal).catch(() => null)
         : Promise.resolve(null);
       const [

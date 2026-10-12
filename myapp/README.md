@@ -1,8 +1,6 @@
 # NZ Election Dashboard
 
-The production build loads live results and update status from
-`https://nz-election-results-updater.conradaml.workers.dev`. The Worker generates
-JSON from the Elections NZ XML feed. The
+The production build uses JSON generated from the Elections NZ XML feed. The
 simulated 2026 dataset remains available for local UI testing.
 
 ## Data modes
@@ -70,11 +68,10 @@ npx wrangler login
 npm run worker:deploy
 ```
 
-The dashboard uses the deployed Worker URL above by default, for both local live
-development and production builds. To use a different Worker, set the GitHub
-repository variable `RESULTS_BASE_URL` to its URL, or set
-`VITE_RESULTS_BASE_URL` locally. Maps and simulated test data remain bundled with
-the site.
+After deployment, set the GitHub repository variable `RESULTS_BASE_URL` to the
+Worker URL printed by Wrangler, without a trailing slash. Production builds will
+then load changing JSON from the Worker while maps and simulated test data remain
+bundled with the site.
 
 Use `npm run worker:dev` to test scheduled runs locally and
 `npm run worker:tail` to watch production logs. Before the 2026 election, change

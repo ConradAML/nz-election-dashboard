@@ -193,17 +193,23 @@ function formatRefreshTime(timestamp) {
     return "";
   }
 
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "Unavailable";
+
   return new Intl.DateTimeFormat("en-NZ", {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
-  }).format(timestamp);
+  }).format(date);
 }
 
 function formatVoteUpdateTime(timestamp) {
   if (!timestamp) {
     return "No vote updates recorded yet";
   }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "Unavailable";
 
   return new Intl.DateTimeFormat("en-NZ", {
     day: "numeric",
@@ -213,7 +219,7 @@ function formatVoteUpdateTime(timestamp) {
     minute: "2-digit",
     timeZone: "Pacific/Auckland",
     timeZoneName: "short",
-  }).format(new Date(timestamp));
+  }).format(date);
 }
 
 function findLastNewVotesTimestamp(history) {
