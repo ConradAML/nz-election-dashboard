@@ -17,7 +17,7 @@ const COALITION_SERIES = [
   },
   {
     id: "national-act-nzfirst-top",
-    label: "National + ACT + NZ First + TOP",
+    label: "National + ACT + NZ First + Opportunity",
     codes: ["16", "5", "17", "24"],
     color: "#3399FF",
     dashed: true,
@@ -30,7 +30,7 @@ const COALITION_SERIES = [
   },
   {
     id: "labour-green-tpm-top",
-    label: "Labour + Green + TPM + TOP",
+    label: "Labour + Green + TPM + Opportunity",
     codes: ["13", "10", "14", "24"],
     color: "#FF0000",
     dashed: true,
@@ -193,7 +193,9 @@ export default function VoteProgressionChart({ history }) {
 
       <div className="vote-progression__chart-wrap">
         <div className="vote-progression__metric-row">
-          <div className="chart-toggle" role="tablist" aria-label="Progression chart metric">
+          <div className="vote-progression__control">
+            <span className="vote-progression__control-label" id="progression-metric-label">Measure</span>
+          <div className="chart-toggle" role="tablist" aria-labelledby="progression-metric-label">
             <button
               type="button"
               role="tab"
@@ -219,7 +221,10 @@ export default function VoteProgressionChart({ history }) {
               Projected seats
             </button>
           </div>
-          <div className="chart-toggle" role="tablist" aria-label="Progression chart series">
+          </div>
+          <div className="vote-progression__control">
+            <span className="vote-progression__control-label" id="progression-series-label">Group by</span>
+          <div className="chart-toggle" role="tablist" aria-labelledby="progression-series-label">
             <button
               type="button"
               role="tab"
@@ -245,6 +250,7 @@ export default function VoteProgressionChart({ history }) {
               Coalitions
             </button>
           </div>
+        </div>
         </div>
         <div className="vote-progression__legend" aria-label={`${seriesMode === "parties" ? "Party" : "Coalition"} lines`}>
           {activeSeries.map((series) => (

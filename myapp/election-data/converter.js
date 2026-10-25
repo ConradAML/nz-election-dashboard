@@ -1,3 +1,4 @@
+import { PARTY_METADATA } from "./party-metadata.js";
 import { XMLParser } from "fast-xml-parser";
 
 const parser = new XMLParser({
@@ -255,11 +256,12 @@ function buildLookups(source) {
     return [text(electorate.e_no), DISPLAY_NAME_ALIASES[name] ?? name];
   }));
   const parties = childRecords(partiesRoot, "party");
-  const partyLookup = Object.fromEntries(parties.map((party) => [party.p_no, {
+  const partyLookup = { ...PARTY_METADATA, ...Object.fromEntries(parties.map((party) => [party.p_no, {
     abbrev: party.abbrev ?? "",
     short_name: party.short_name ?? "",
     party_name: party.party_name ?? "",
-  }]));
+    registered: party.registered ?? "",
+  }])) };
   return { candidates, electorateNames, parties, partyLookup };
 }
 

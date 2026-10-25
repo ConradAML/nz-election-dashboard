@@ -1722,3 +1722,16 @@ code {
     align-items: start;
   }
 }
+
+.vote-progression__control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.vote-progression__control-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666666;
+}

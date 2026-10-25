@@ -1,3 +1,4 @@
+import { applyPartyColorOverrides } from "../constants/partyColors";
 import { fetchDemoData } from "../utils/demoData";
 import { USE_DEMO_DATA } from "../constants/dataSource";
 import { useEffect, useState } from "react";
@@ -148,6 +149,7 @@ export default function useDashboardData() {
         return;
       }
 
+      applyPartyColorOverrides(results, electorateDetails);
       setData({
         results,
         voteCount,

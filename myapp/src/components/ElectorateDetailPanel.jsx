@@ -1,3 +1,4 @@
+import { hasCountedVotes, NO_VOTES_COLOR } from "../utils/voteStatus";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   NEUTRAL_PARTY_COLOR,
@@ -259,7 +260,9 @@ export default function ElectorateDetailPanel({
     ? electorate.total_valid_candidate_votes
     : electorate.total_valid_party_votes;
   const percentCounted = Number(electorate.percent_voting_places_counted ?? 0);
-  const electorateWinnerColor = partyColor(electorate.winner_party_code);
+  const hasVotes = hasCountedVotes(electorate, isElectorateTab ? "electorate" : "party");
+  const electorateWinnerColor = hasCountedVotes(electorate)
+    ? partyColor(electorate.winner_party_code) : NO_VOTES_COLOR;
   const electorateWinnerTextColor = textColorForBackground(electorateWinnerColor);
   const leadingCandidate = electorate.candidate_results?.[0] ?? null;
   const runnerUpCandidate = electorate.candidate_results?.[1] ?? null;
@@ -351,7 +354,7 @@ export default function ElectorateDetailPanel({
         </button>
       </div>
 
-      {hasMajorityData && (
+      {hasVotes && hasMajorityData && (
         <div
           className="electorate-panel__majority"
           style={{
@@ -415,7 +418,7 @@ export default function ElectorateDetailPanel({
       )}
 
       <p className="electorate-panel__summary">
-        Total valid votes: {formatNumber(totalVotes)}
+        {hasVotes ? `Total valid votes: ${formatNumber(totalVotes)}` : "No votes counted yet"}
       </p>
       <div
         className="electorate-panel__counted"

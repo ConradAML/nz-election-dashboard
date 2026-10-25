@@ -1,3 +1,4 @@
+import { hasCountedVotes, NO_VOTES_COLOR } from "../utils/voteStatus";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   NEUTRAL_MAP_FILL,
@@ -421,6 +422,10 @@ function buildStyledSvgMarkup({
         directionColor,
         strength,
       );
+    }
+    if (!hasCountedVotes(electorateDetailsEntry ?? mapEntry,
+      mapDataOption.kind.startsWith("party-") ? "party" : "electorate")) {
+      baseFill = NO_VOTES_COLOR;
     }
     const fill = isActive
       ? lightenColor(baseFill, SELECTED_FILL_LIGHTEN)
@@ -1007,6 +1012,8 @@ export default function InteractiveMap({
   const hoveredElectorate = hoveredElectorateNumber
     ? electorateDetailsLookup[hoveredElectorateNumber] ?? null
     : null;
+  const hoveredHasVotes = hasCountedVotes(hoveredElectorate,
+    mapDataOption.kind.startsWith("party-") ? "party" : "electorate");
   const hoveredBaselineElectorate = hoveredElectorateNumber
     ? baselineElectorateDetailsLookup[hoveredElectorateNumber] ?? null
     : null;
@@ -1585,6 +1592,8 @@ export default function InteractiveMap({
                   {hoveredElectorate.electorate_name}
                 </p>
                 <p className="map-panel__tooltip-body">
+                  {!hoveredHasVotes ? <span>No votes counted yet</span> : <>
+
                   {mapDataOption.kind === "electorate-winner" && (
                     <>
                       <span
@@ -1653,6 +1662,7 @@ export default function InteractiveMap({
                       </span>
                     </>
                   )}
+                  </>}
                 </p>
               </div>
             )}
