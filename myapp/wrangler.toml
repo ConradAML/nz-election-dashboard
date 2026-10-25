@@ -1,7 +1,10 @@
 "$schema" = "./node_modules/wrangler/config-schema.json"
 name = "nz-election-dashboard"
+main = "website-worker.js"
 compatibility_date = "2026-07-22"
 
 [assets]
+binding = "ASSETS"
+run_worker_first = ["/demo/xml/*"]
 directory = "./dist"
 not_found_handling = "single-page-application"

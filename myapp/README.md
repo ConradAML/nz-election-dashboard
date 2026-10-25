@@ -88,6 +88,15 @@ For production diagnostics, set the `UPDATE_TOKEN` Worker secret with
 An authenticated `POST /admin/refresh` runs the same update as the Cron Trigger;
 the endpoint is unavailable without that secret.
 
+## Demo feed connection
+
+The Cloudflare website serves `/demo/xml/*` through `website-worker.js`, which
+requests the Elections NZ demo XML on the server. Deploy the website after
+changing this worker; rebuilding the static assets alone does not install it.
+Local Vite development uses its own `/demo-xml/` proxy.
+For GitHub Pages, set `RESULTS_BASE_URL` to the deployed results worker URL,
+since GitHub Pages cannot run the website proxy.
+
 ## Front-end development
 
 For the Cloudflare website build, use `cd myapp && npm install && npm run build`

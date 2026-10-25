@@ -6,7 +6,7 @@ import partyNotionalsCsv from "../../election-data/baselines/polling_place_split
 let history = { version: 1, election: "demo", snapshots: [] };
 export async function fetchDemoData(signal) {
   const worker = import.meta.env.VITE_RESULTS_BASE_URL?.trim().replace(/\/$/, "");
-  const base = import.meta.env.DEV ? "/demo-xml/" : worker ? `${worker}/demo/xml/` : "https://mediademo.electionresults.govt.nz/xml/";
+  const base = import.meta.env.DEV ? "/demo-xml/" : worker ? `${worker}/demo/xml/` : `${import.meta.env.BASE_URL}demo/xml/`;
   async function download(file) {
     const response = await fetch(`${base}${file}`, { signal, cache: "no-store" });
     if (!response.ok) throw new Error(`Demo feed ${file}: HTTP ${response.status}`);
