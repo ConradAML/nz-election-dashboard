@@ -228,6 +228,17 @@ async function serveObject(request, env, context, key, immutable = false) {
 
 async function handleRequest(request, env, context) {
   const pathname = new URL(request.url).pathname;
+  if (pathname.startsWith("/demo/xml/") && ["GET", "HEAD"].includes(request.method)) {
+    const file = pathname.slice("/demo/xml/".length);
+    if (!/^(election|candidates|electorates|parties)\.xml$/.test(file) && !/^e\d{2}\/e\d{2}\.xml$/.test(file)) {
+      return jsonResponse({ error: "Not found" }, { status: 404 });
+    }
+    const upstream = await fetch(`https://mediademo.electionresults.govt.nz/xml/${file}`);
+    return new Response(request.method === "HEAD" ? null : upstream.body, {
+      status: upstream.status,
+      headers: { "content-type": "application/xml", "access-control-allow-origin": "*", "cache-control": "no-store" },
+    });
+  }
   if (pathname === "/admin/refresh") {
     if (request.method !== "POST") {
       return jsonResponse({ error: "Method not allowed" }, { status: 405, headers: { allow: "POST" } });

@@ -1,3 +1,5 @@
+import { fetchDemoData } from "../utils/demoData";
+import { USE_DEMO_DATA } from "../constants/dataSource";
 import { useEffect, useState } from "react";
 import {
   resolveDashboardDataFile,
@@ -100,7 +102,9 @@ export default function useDashboardData() {
     let isActive = true;
 
     async function loadDashboardData(signal) {
-      const statusPromise = !USE_SIMULATED_DATA && import.meta.env.VITE_RESULTS_BASE_URL?.trim()
+      const demo = USE_DEMO_DATA ? await fetchDemoData(signal) : null;
+      const loadResults = (fileName) => demo ? Promise.resolve(demo[fileName]) : fetchJson(fileName, signal);
+      const statusPromise = !USE_DEMO_DATA && !USE_SIMULATED_DATA && import.meta.env.VITE_RESULTS_BASE_URL?.trim()
         ? fetchJson("status", signal).catch(() => null)
         : Promise.resolve(null);
       const [
@@ -121,12 +125,12 @@ export default function useDashboardData() {
         hamiltonMapMarkup,
         wellingtonMapMarkup,
       ] = await Promise.all([
-        fetchJson("results.json", signal),
-        fetchJson("vote_count.json", signal),
-        fetchJson("party_vote_snapshots.json", signal),
-        fetchJson("electorate_details.json", signal),
+        loadResults("results.json"),
+        loadResults("vote_count.json"),
+        loadResults("party_vote_snapshots.json"),
+        loadResults("electorate_details.json"),
         fetchPreservedJson("electorate_details.json", signal),
-        fetchJson("electorate_winners.json", signal),
+        loadResults("electorate_winners.json"),
         fetchText("general_electorates_2026_regions.csv", signal),
         fetchText("nzregions.svg", signal),
         fetchText("nzmap.svg", signal),

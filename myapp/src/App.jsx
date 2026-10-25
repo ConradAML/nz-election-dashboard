@@ -1,3 +1,4 @@
+import { DATA_SOURCE, USE_DEMO_DATA, selectDataSource } from "./constants/dataSource";
 import { useEffect, useRef, useState } from "react";
 import VerticalBarChart from "./components/VerticalBarChart";
 import SemiDonutChart from "./components/SemiDonutChart";
@@ -795,7 +796,9 @@ export default function App() {
     setElectorateGroup(nextElectorateGroup);
   }
 
-  const liveStatusMessage = isSimulatedData
+  const liveStatusMessage = error && !results
+    ? `Could not load ${USE_DEMO_DATA ? "demo" : "election"} results: ${error.message}`
+    : isSimulatedData
     ? "Simulated dataset loaded"
     : error
       ? `Showing latest results as of ${formatRefreshTime(lastSuccessfulAt)}`
@@ -810,7 +813,10 @@ export default function App() {
     return (
       <main className="dashboard-shell">
         <section className="chart-panel chart-panel--full">
-          <h2>Loading latest results…</h2>
+          <h2>Loading {USE_DEMO_DATA ? "demo" : "latest"} results…</h2>
+          <label>Results source <select aria-label="Results source" value={DATA_SOURCE} onChange={(event) => selectDataSource(event.target.value)}>
+            <option value="live">Live results</option><option value="demo">Elections NZ demo</option><option value="simulated">Simulated results</option>
+          </select></label>
         </section>
       </main>
     );
@@ -819,6 +825,15 @@ export default function App() {
   return (
     <main className="dashboard-shell">
       <section className="chart-panel chart-panel--full">
+        <label className="results-source-control">
+          Results source{" "}
+          <select aria-label="Results source" value={DATA_SOURCE} onChange={(event) => selectDataSource(event.target.value)}>
+            <option value="live">Live results</option>
+            <option value="demo">Elections NZ demo</option>
+            <option value="simulated">Simulated results</option>
+          </select>
+        </label>
+        {USE_DEMO_DATA && <div className="dashboard-simulated-banner" role="status">Currently showing Elections NZ demo results</div>}
         {isSimulatedData && (
           <div className="dashboard-simulated-banner" role="status">
             Currently showing simulated 2026 election data

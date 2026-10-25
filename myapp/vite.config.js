@@ -7,5 +7,10 @@ export default defineConfig(() => {
   return {
     base: isGitHubPagesBuild ? "/nz-election-dashboard/" : "/",
     plugins: [react()],
+    server: { proxy: { "/demo-xml/": {
+      target: "https://mediademo.electionresults.govt.nz",
+      changeOrigin: true,
+      rewrite: (url) => url.replace(/^\/demo-xml\//, "/xml/"),
+    } } },
   };
 });
