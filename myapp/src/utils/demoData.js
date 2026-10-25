@@ -1,7 +1,7 @@
 import { buildPartyVoteSnapshot, convertElectionData } from "../../election-data/converter";
 import mapSvg from "../../../nzmap.svg?raw";
-import electorateNotionalsCsv from "../../../polling_place_split_final_notional_2026_electorate_vote_all_parties.csv?raw";
-import partyNotionalsCsv from "../../../polling_place_split_final_notional_2026_list_vote_all_parties.csv?raw";
+import electorateNotionalsCsv from "../../election-data/baselines/polling_place_split_final_notional_2026_electorate_vote_all_parties.csv?raw";
+import partyNotionalsCsv from "../../election-data/baselines/polling_place_split_final_notional_2026_list_vote_all_parties.csv?raw";
 
 let history = { version: 1, election: "demo", snapshots: [] };
 export async function fetchDemoData(signal) {

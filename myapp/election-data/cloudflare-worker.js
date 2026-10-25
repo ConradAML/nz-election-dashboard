@@ -1,7 +1,7 @@
 import { XMLValidator } from "fast-xml-parser";
 import mapSvg from "../../nzmap.svg";
-import electorateNotionalsCsv from "../../polling_place_split_final_notional_2026_electorate_vote_all_parties.csv";
-import partyNotionalsCsv from "../../polling_place_split_final_notional_2026_list_vote_all_parties.csv";
+import electorateNotionalsCsv from "./baselines/polling_place_split_final_notional_2026_electorate_vote_all_parties.csv";
+import partyNotionalsCsv from "./baselines/polling_place_split_final_notional_2026_list_vote_all_parties.csv";
 import { buildPartyVoteSnapshot, convertElectionData } from "./converter.js";
 
 const CORE_FILES = ["candidates.xml", "electorates.xml", "parties.xml"];
