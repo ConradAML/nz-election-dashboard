@@ -1,8 +1,10 @@
+import { serveDataset } from "./election-data/serve-dataset.js";
 const DEMO_BASE = "https://mediademo.electionresults.govt.nz/xml/";
 
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
+    if (pathname === "/results/dataset") return serveDataset(request, env);
     if (!pathname.startsWith("/demo/xml/")) return env.ASSETS.fetch(request);
     const headers = { "cache-control": "no-store" };
     if (!["GET", "HEAD"].includes(request.method)) {

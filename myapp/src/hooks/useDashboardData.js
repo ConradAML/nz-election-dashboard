@@ -1,6 +1,4 @@
 import { applyPartyColorOverrides } from "../constants/partyColors";
-import { fetchDemoData } from "../utils/demoData";
-import { USE_DEMO_DATA } from "../constants/dataSource";
 import { useEffect, useState } from "react";
 import {
   resolveDashboardDataFile,
@@ -103,11 +101,20 @@ export default function useDashboardData() {
     let isActive = true;
 
     async function loadDashboardData(signal) {
-      const demo = USE_DEMO_DATA ? await fetchDemoData(signal) : null;
-      const loadResults = (fileName) => demo ? Promise.resolve(demo[fileName]) : fetchJson(fileName, signal);
-      const statusPromise = !USE_DEMO_DATA && !USE_SIMULATED_DATA && import.meta.env.VITE_RESULTS_BASE_URL?.trim()
-        ? fetchJson("status", signal).catch(() => null)
-        : Promise.resolve(null);
+      const worker = import.meta.env.VITE_RESULTS_BASE_URL?.trim().replace(/\/$/, "");
+      let published = null;
+      if (!USE_SIMULATED_DATA) {
+        const url = worker ? `${worker}/dataset` : buildAssetUrl("results/dataset");
+        const response = await fetch(url, { signal, cache: "no-store" });
+        if (!response.ok) throw new Error(`Could not load saved Cloudflare dataset: HTTP ${response.status}`);
+        if (!response.headers.get("content-type")?.includes("application/json")) {
+          throw new Error("Cloudflare dataset endpoint is unavailable; deploy the updated website and results workers");
+        }
+        published = await response.json();
+        if (!Array.isArray(published.partyVoteSnapshots?.snapshots)) throw new Error("Saved vote history is missing from the Cloudflare dataset");
+      }
+      const keys = { "results.json": "results", "vote_count.json": "voteCount", "party_vote_snapshots.json": "partyVoteSnapshots", "electorate_details.json": "electorateDetails", "electorate_winners.json": "electorateWinners" };
+      const loadResults = (fileName) => published ? Promise.resolve(published[keys[fileName]]) : fetchJson(fileName, signal);
       const [
         results,
         voteCount,
@@ -143,7 +150,7 @@ export default function useDashboardData() {
         fetchStaticText("hamilton.svg", signal),
         fetchStaticText("wellington.svg", signal),
       ]);
-      const status = await statusPromise;
+      const status = published;
 
       if (!isActive) {
         return;

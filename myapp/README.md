@@ -88,14 +88,27 @@ For production diagnostics, set the `UPDATE_TOKEN` Worker secret with
 An authenticated `POST /admin/refresh` runs the same update as the Cron Trigger;
 the endpoint is unavailable without that secret.
 
-## Demo feed connection
+## Saved results and tracker history
 
-The Cloudflare website serves `/demo/xml/*` through `website-worker.js`, which
-requests the Elections NZ demo XML on the server. Deploy the website after
-changing this worker; rebuilding the static assets alone does not install it.
-Local Vite development uses its own `/demo-xml/` proxy.
-For GitHub Pages, set `RESULTS_BASE_URL` to the deployed results worker URL,
-since GitHub Pages cannot run the website proxy.
+The website reads `/results/dataset` from its Cloudflare website Worker, using
+the `RESULTS_BUCKET` binding to the existing `nz-election-results` R2 bucket.
+The response includes results and the complete saved snapshot history from one
+`latest.json` publication. Reloading the page never creates or clears history.
+`VITE_RESULTS_BASE_URL`, when set, uses that results Worker's `/dataset` endpoint
+instead. Simulated mode continues to read the bundled fixture.
+
+The scheduled results updater collects snapshots every minute without requiring
+an open browser. Its checked-in XML source is the Elections NZ demo feed. When
+switching to the real feed, change `ELECTION_XML_BASE_URL` and `ELECTION_YEAR` in
+`election-data/wrangler.jsonc` and the frontend's source label configuration.
+Histories from different source URLs are kept in separate publications; previous
+R2 versions are retained. Browser-only demo history from older builds cannot be
+recovered after the page has closed.
+
+Deploy both workers for this change: `npm run worker:deploy`, then build and
+run `npm run website:deploy`. An existing `VITE_RESULTS_BASE_URL` must point to
+the updated results Worker. Locally, run `npm run worker:dev` alongside Vite;
+Vite proxies `/results/` to `http://localhost:8787` by default.
 
 ## Front-end development
 

@@ -1,3 +1,4 @@
+import { serveDataset } from "./serve-dataset.js";
 import { XMLValidator } from "fast-xml-parser";
 import mapSvg from "../../nzmap.svg";
 import electorateNotionalsCsv from "./baselines/polling_place_split_final_notional_2026_electorate_vote_all_parties.csv";
@@ -110,14 +111,14 @@ async function publishResults(env) {
   const conversionHash = await sha256(JSON.stringify([
     "2023-baselines-v2", mapSvg, electorateNotionalsCsv, partyNotionalsCsv,
   ]));
-  if (current?.electionHash === electionHash && current?.conversionHash === conversionHash) {
+  if (current?.sourceUrl === env.ELECTION_XML_BASE_URL && current?.electionHash === electionHash && current?.conversionHash === conversionHash) {
     console.log(`No Elections NZ changes; current version is ${current.version}`);
     return current;
   }
 
   const { files, source } = await downloadSource(env.ELECTION_XML_BASE_URL, electionXml);
   const hash = await sha256(`${await sourceHash(files)}\0${conversionHash}`);
-  if (current?.sourceHash === hash) {
+  if (current?.sourceUrl === env.ELECTION_XML_BASE_URL && current?.sourceHash === hash) {
     const updatedCurrent = { ...current, electionHash, conversionHash };
     await env.RESULTS_BUCKET.put("latest.json", JSON.stringify(updatedCurrent), {
       httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
@@ -127,7 +128,9 @@ async function publishResults(env) {
   }
 
   const converted = convertElectionData(source);
-  const previousHistoryKey = current?.files?.partyVoteSnapshots;
+  // Keep prior publications, but never combine snapshots from different feeds.
+  const previousHistoryKey = current?.sourceUrl === env.ELECTION_XML_BASE_URL
+    ? current?.files?.partyVoteSnapshots : null;
   const history = previousHistoryKey
     ? await readJson(env.RESULTS_BUCKET, previousHistoryKey)
     : { version: 1, election: env.ELECTION_YEAR, snapshots: [] };
@@ -228,6 +231,7 @@ async function serveObject(request, env, context, key, immutable = false) {
 
 async function handleRequest(request, env, context) {
   const pathname = new URL(request.url).pathname;
+  if (pathname === "/dataset") return serveDataset(request, env);
   if (pathname.startsWith("/demo/xml/") && ["GET", "HEAD"].includes(request.method)) {
     const file = pathname.slice("/demo/xml/".length);
     if (!/^(election|candidates|electorates|parties)\.xml$/.test(file) && !/^e\d{2}\/e\d{2}\.xml$/.test(file)) {
